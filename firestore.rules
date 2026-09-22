@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // User profile documents
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Public listings across all pillars (Marketplace, Business, Services, Property)
+    match /listings/{listingId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null;
+    }
+    
+    // User favorites
+    match /users/{userId}/favorites/{favId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Trade inquiries and customer leads
+    match /leads/{leadId} {
+      allow create: if true;
+      allow read: if request.auth != null;
+    }
+    
+    // Verified ratings and reviews
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null;
+    }
+    
+    // KYC submissions and compliance records
+    match /kyc/{kycId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Chat history
+    match /chats/{chatId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
