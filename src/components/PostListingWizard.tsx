@@ -247,12 +247,12 @@ export const PostListingWizard: React.FC<PostListingWizardProps> = ({
         {/* Wizard Header */}
         <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <span className="text-base">{currentCountry.flag}</span>
-              <h2 className="text-lg font-bold text-slate-900">Post a New Listing</h2>
-              <span className="text-xs font-mono text-amber-700 bg-amber-100 px-2 py-0.5 rounded font-semibold">
+              <h2 className="text-lg font-black text-slate-900">Post New Listing</h2>
+              <div className="text-[10px] font-black uppercase tracking-widest text-amber-700 border-l-2 border-amber-600 pl-2">
                 {currentCountry.subdomain}.marketplacehub.company
-              </span>
+              </div>
             </div>
             <p className="text-xs text-slate-500">Step {step} of 5: Create and publish your offering</p>
           </div>
@@ -366,16 +366,16 @@ export const PostListingWizard: React.FC<PostListingWizardProps> = ({
 
               {/* AI Suggestion Box */}
               {title.length > 5 && (
-                <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-start gap-3 animate-in fade-in zoom-in-95">
+                <div className="p-4 bg-indigo-50/50 border border-indigo-200/50 rounded-2xl flex items-start gap-3 animate-in fade-in zoom-in-95">
                   <Sparkles className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
                   <div>
-                    <div className="text-[10px] font-black text-indigo-700 uppercase tracking-widest mb-0.5">AI Section Suggestion</div>
-                    <div className="text-xs text-indigo-900">
-                      Based on your title, we recommend the <strong className="underline decoration-indigo-300">
+                    <div className="text-[10px] font-black text-indigo-700 uppercase tracking-widest mb-1">AI Recommendation</div>
+                    <div className="text-xs text-indigo-900 font-bold leading-relaxed">
+                      Optimizing placement for <span className="border-b-2 border-indigo-300">
                         {title.toLowerCase().includes('house') || title.toLowerCase().includes('apartment') ? 'Property Portal' : 
                          title.toLowerCase().includes('plumber') || title.toLowerCase().includes('electrician') ? 'Services & Trades' :
                          title.toLowerCase().includes('toyota') || title.toLowerCase().includes('car') ? 'Motors' : 'Marketplace'}
-                      </strong> section.
+                      </span> based on title entropy.
                     </div>
                   </div>
                 </div>
@@ -529,10 +529,10 @@ export const PostListingWizard: React.FC<PostListingWizardProps> = ({
                                   setSelectedAmenities([...selectedAmenities, amenity]);
                                 }
                               }}
-                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tight border transition-all ${
                                 isChecked
-                                  ? 'bg-amber-100 border-amber-400 text-amber-900 shadow-xs'
-                                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                                  ? 'bg-amber-500 border-amber-600 text-white shadow-sm'
+                                  : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
                               }`}
                             >
                               {isChecked ? '✓ ' : '+ '}
@@ -768,23 +768,23 @@ export const PostListingWizard: React.FC<PostListingWizardProps> = ({
               <h3 className="text-sm font-bold text-slate-900">Pricing & Image Assets</h3>
 
               {/* Price input */}
-              <div className="p-4 bg-amber-50/60 rounded-2xl border border-amber-200">
-                <label className="text-xs font-bold text-amber-900 block mb-1">
-                  Price in Local Currency ({currentCountry.currencyCode})
+              <div className="p-5 bg-amber-50/60 rounded-3xl border border-amber-200 shadow-xs">
+                <label className="text-[10px] font-black text-amber-900 uppercase tracking-widest block mb-2">
+                  Market Listing Price ({currentCountry.currencyCode})
                 </label>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold font-mono text-base text-slate-700">
+                <div className="flex items-center gap-3">
+                  <span className="font-black text-xl text-slate-900 tabular-nums">
                     {currentCountry.currencySymbol}
                   </span>
                   <input
                     type="number"
                     value={price}
                     onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                    placeholder="e.g. 15000"
-                    className="w-full p-2.5 bg-white border border-amber-300 rounded-xl text-base font-bold font-mono focus:outline-none"
+                    placeholder="0.00"
+                    className="flex-1 p-0 bg-transparent border-none text-2xl font-black text-slate-900 tabular-nums tracking-tighter focus:ring-0 placeholder:text-amber-900/20"
                     required
                   />
-                  <span className="text-xs text-slate-500 font-semibold uppercase">{currentCountry.currencyCode}</span>
+                  <span className="text-[10px] text-amber-700 font-black uppercase tracking-widest">{currentCountry.currencyCode}</span>
                 </div>
               </div>
 

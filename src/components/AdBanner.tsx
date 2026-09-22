@@ -32,7 +32,7 @@ export const AdBanner: React.FC<AdBannerProps> = ({ ads, currentCountryCode }) =
         
         <div className="absolute inset-0 p-6 sm:p-10 flex flex-col justify-center max-w-lg">
           <div className="flex items-center gap-2 mb-3">
-            <div className="px-2 py-0.5 rounded bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+            <div className="text-amber-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-1 border-l-2 border-amber-500 pl-2">
               <Sparkles className="w-3 h-3" />
               <span>Sponsored</span>
             </div>

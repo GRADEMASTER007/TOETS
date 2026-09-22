@@ -212,7 +212,7 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
           </div>
         </div>
 
-        {/* Configuration Bar: Roles, Models, Grounding */}
+        {/* Configuration Bar: Roles */}
         <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/80 flex flex-wrap items-center justify-between gap-3 text-xs">
           {/* Role selector buttons */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
@@ -223,10 +223,10 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
                 <button
                   key={r.id}
                   onClick={() => setRole(r.id as any)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl font-medium transition-all text-xs shrink-0 ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition-all text-[11px] uppercase tracking-wider shrink-0 ${
                     isSelected
-                      ? 'bg-amber-500 text-white font-semibold shadow-xs'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      ? 'bg-slate-900 text-white shadow-md'
+                      : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                   }`}
                   title={r.desc}
                 >
@@ -236,179 +236,46 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
               );
             })}
           </div>
-
-          {/* Model & Grounding Toggles */}
-          <div className="flex items-center gap-2">
-            {/* Model select */}
-            <select
-              value={modelChoice}
-              onChange={(e) => setModelChoice(e.target.value as any)}
-              className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl px-2.5 py-1 text-xs border-0 font-medium focus:ring-1 focus:ring-amber-500"
-            >
-              <option value="gemini-3.5-flash">gemini-3.5-flash (General)</option>
-              <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview (Complex)</option>
-              <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite (Fast)</option>
-            </select>
-
-            {/* Google Search Grounding toggle (gemini-3.5-flash only) */}
-            {modelChoice === 'gemini-3.5-flash' && (
-              <button
-                onClick={() => {
-                  setUseGoogleSearch(!useGoogleSearch);
-                  if (!useGoogleSearch) setUseGoogleMaps(false); // mutually exclusive per SDK rules
-                }}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-semibold transition-all border ${
-                  useGoogleSearch
-                    ? 'bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-950/60 dark:border-blue-700 dark:text-blue-300'
-                    : 'bg-slate-100 dark:bg-slate-800 border-transparent text-slate-500 hover:text-slate-700'
-                }`}
-                title="Google Search Grounding via googleSearch tool"
-              >
-                <Search className="w-3 h-3" />
-                <span>Search</span>
-              </button>
-            )}
-
-            {/* Google Maps Grounding toggle (gemini-3.5-flash only) */}
-            {modelChoice === 'gemini-3.5-flash' && (
-              <button
-                onClick={() => {
-                  setUseGoogleMaps(!useGoogleMaps);
-                  if (!useGoogleMaps) setUseGoogleSearch(false); // mutually exclusive per SDK rules
-                }}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-semibold transition-all border ${
-                  useGoogleMaps
-                    ? 'bg-emerald-50 border-emerald-300 text-emerald-700 dark:bg-emerald-950/60 dark:border-emerald-700 dark:text-emerald-300'
-                    : 'bg-slate-100 dark:bg-slate-800 border-transparent text-slate-500 hover:text-slate-700'
-                }`}
-                title="Google Maps Grounding via googleMaps tool"
-              >
-                <MapPin className="w-3 h-3" />
-                <span>Maps</span>
-              </button>
-            )}
-
-            {/* Pro Thinking toggle (gemini-3.1-pro-preview only) */}
-            {modelChoice === 'gemini-3.1-pro-preview' && (
-              <button
-                onClick={() => setEnableThinking(!enableThinking)}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-semibold transition-all border ${
-                  enableThinking
-                    ? 'bg-purple-50 border-purple-300 text-purple-700 dark:bg-purple-950/60 dark:border-purple-700 dark:text-purple-300'
-                    : 'bg-slate-100 dark:bg-slate-800 border-transparent text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                <BrainCircuit className="w-3 h-3" />
-                <span>Deep Thinking</span>
-              </button>
-            )}
-          </div>
         </div>
 
         {/* Scrollable Message Thread */}
-        <div className="flex-1 p-5 overflow-y-auto space-y-4 bg-slate-50/50 dark:bg-slate-950/30">
+        <div className="flex-1 p-5 overflow-y-auto space-y-5 bg-slate-50/30 dark:bg-slate-950/30">
           {messages.map((m) => {
             const isUser = m.sender === 'user';
             return (
               <div
                 key={m.id}
-                className={`flex gap-3 max-w-[85%] ${isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
+                className={`flex gap-4 max-w-[90%] ${isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
               >
-                {/* Avatar */}
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
-                    isUser
-                      ? 'bg-slate-900 dark:bg-slate-700 text-white'
-                      : 'bg-amber-500 text-slate-950 shadow-sm shadow-amber-500/30'
-                  }`}
-                >
-                  {isUser ? <UserIcon className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                </div>
-
                 {/* Message Bubble */}
                 <div
-                  className={`rounded-2xl p-4 text-sm space-y-2 shadow-xs ${
+                  className={`rounded-2xl p-4 text-sm space-y-3 shadow-xs ${
                     isUser
-                      ? 'bg-amber-600 text-white rounded-tr-none'
+                      ? 'bg-slate-900 text-white rounded-tr-none'
                       : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-tl-none'
                   }`}
                 >
                   <p className="whitespace-pre-line leading-relaxed">{m.text}</p>
 
-                  {/* Grounding metadata (Search queries / Web links / Map places) */}
-                  {m.groundingMetadata?.webSearchQueries && m.groundingMetadata.webSearchQueries.length > 0 && (
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-700 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
-                      <div className="flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400">
-                        <Search className="w-3 h-3" />
-                        <span>Google Search Grounding Queries:</span>
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {m.groundingMetadata.webSearchQueries.map((q, idx) => (
-                          <span key={idx} className="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-md text-[10px]">
-                            {q}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Grounding web or map links */}
-                  {m.groundingMetadata?.groundingChunks && m.groundingMetadata.groundingChunks.length > 0 && (
-                    <div className="pt-1.5 flex flex-wrap gap-1.5 text-[11px]">
-                      {m.groundingMetadata.groundingChunks.map((chunk, idx) => {
-                        if (chunk.web) {
-                          return (
-                            <a
-                              key={idx}
-                              href={chunk.web.uri}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:underline text-[10px]"
-                            >
-                              <span>{chunk.web.title || 'Source'}</span>
-                              <ExternalLink className="w-2.5 h-2.5" />
-                            </a>
-                          );
-                        }
-                        if (chunk.maps) {
-                          return (
-                            <a
-                              key={idx}
-                              href={chunk.maps.uri}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 hover:underline text-[10px]"
-                            >
-                              <MapPin className="w-2.5 h-2.5" />
-                              <span>{chunk.maps.title}</span>
-                            </a>
-                          );
-                        }
-                        return null;
-                      })}
-                    </div>
-                  )}
-
                   {/* Footer metadata with time and TTS */}
                   <div
-                    className={`flex items-center justify-between gap-2 pt-1 text-[10px] ${
-                      isUser ? 'text-amber-200' : 'text-slate-400'
+                    className={`flex items-center justify-between gap-4 pt-2 border-t border-slate-100 dark:border-slate-700/50 text-[10px] uppercase font-bold tracking-widest ${
+                      isUser ? 'text-slate-400' : 'text-slate-400'
                     }`}
                   >
-                    <span>{m.timestamp}</span>
+                    <span className="tabular-nums">{m.timestamp}</span>
                     {!isUser && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         {m.modelUsed && (
-                          <span className="font-mono text-[9px] bg-slate-100 dark:bg-slate-700 px-1.5 py-0.2 rounded text-slate-500">
-                            {m.modelUsed}
+                          <span className="tabular-nums text-amber-600">
+                            {m.modelUsed.toUpperCase()}
                           </span>
                         )}
                         <button
                           onClick={() => handleSpeakText(m.text)}
-                          className="hover:text-amber-500 transition-colors p-0.5"
-                          title="Read message aloud"
+                          className="hover:text-amber-500 transition-colors"
                         >
-                          <Volume2 className="w-3 h-3" />
+                          <Volume2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     )}

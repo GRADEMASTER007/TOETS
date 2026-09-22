@@ -154,11 +154,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* Header Banner */}
       <div className="p-6 bg-slate-900 text-white rounded-3xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-slate-800">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <h1 className="text-xl font-black">Market Place Hub Master CMS</h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 font-bold text-xs">
+            <div className="text-[10px] font-black uppercase tracking-widest text-amber-500 border-l-2 border-amber-600 pl-2">
               Super Admin Mode
-            </span>
+            </div>
           </div>
           <p className="text-xs text-slate-400 mt-1">
             Global management for 55 regional subdomains across Pan-Africa & UAE on marketplacehub.company
@@ -279,26 +279,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {activeTab === 'intelligence' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-xs">
-              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Top Category</div>
-              <div className="text-lg font-black text-slate-900">Residential Property</div>
-              <div className="text-[11px] text-emerald-600 font-bold mt-1">34% of Global Leads</div>
-            </div>
-            <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-xs">
-              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Growth Region</div>
-              <div className="text-lg font-black text-slate-900">UAE (Dubai)</div>
-              <div className="text-[11px] text-emerald-600 font-bold mt-1">+124% YoY Volume</div>
-            </div>
-            <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-xs">
-              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Avg Lead Cost</div>
-              <div className="text-lg font-black text-slate-900">R 84.50 ZAR</div>
-              <div className="text-[11px] text-slate-500 font-bold mt-1">Boosted vs Standard</div>
-            </div>
-            <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-xs">
-              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">AI Search Usage</div>
-              <div className="text-lg font-black text-slate-900">68,200 Queries</div>
-              <div className="text-[11px] text-indigo-600 font-bold mt-1">82% Match Rate</div>
-            </div>
+        <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-xs">
+          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Top Category</div>
+          <div className="text-lg font-black text-slate-900">Residential Property</div>
+          <div className="text-[10px] text-emerald-600 font-black uppercase tracking-tight mt-1 border-l-2 border-emerald-500 pl-2">34% of Global Leads</div>
+        </div>
+        <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-xs">
+          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Growth Region</div>
+          <div className="text-lg font-black text-slate-900">UAE (Dubai)</div>
+          <div className="text-[10px] text-emerald-600 font-black uppercase tracking-tight mt-1 border-l-2 border-emerald-500 pl-2">+124% YoY Volume</div>
+        </div>
+        <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-xs">
+          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Avg Lead Cost</div>
+          <div className="text-lg font-black text-slate-900 tabular-nums">R 84.50 ZAR</div>
+          <div className="text-[10px] text-slate-400 font-black uppercase tracking-tight mt-1 border-l-2 border-slate-300 pl-2">Boosted vs Standard</div>
+        </div>
+        <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-xs">
+          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">AI Search Usage</div>
+          <div className="text-lg font-black text-slate-900 tabular-nums">68,200 Queries</div>
+          <div className="text-[10px] text-indigo-600 font-black uppercase tracking-tight mt-1 border-l-2 border-indigo-500 pl-2">82% Match Rate</div>
+        </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -388,11 +388,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <td className="py-3 px-2 font-mono text-slate-600">{row.count}</td>
                       <td className="py-3 px-2 font-mono text-slate-600">{row.vendors}</td>
                       <td className="py-3 px-2">
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px]">
+                        <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest border-l-2 border-emerald-500 pl-2">
                           {row.conv}
-                        </span>
+                        </div>
                       </td>
-                      <td className="py-3 px-2 text-right font-black text-slate-900">{row.rev}</td>
+                      <td className="py-3 px-2 text-right font-black text-slate-900 tabular-nums">{row.rev}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -408,35 +408,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase text-slate-500">PayFast Gateway (ZAR)</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">Active</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">PayFast Gateway (ZAR)</span>
+                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter">Active</span>
               </div>
-              <div className="text-2xl font-black text-slate-900 font-mono">
+              <div className="text-2xl font-black text-slate-900 tabular-nums">
                 R {totalRevenueZAR.toLocaleString()} ZAR
               </div>
-              <div className="text-xs text-slate-500">{payFastCount} Boost Transactions Settled</div>
+              <div className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">{payFastCount} Settlements</div>
             </div>
 
             <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase text-slate-500">Platform Commissions (ZAR)</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">Active</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Platform Commissions</span>
+                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter">Active</span>
               </div>
-              <div className="text-2xl font-black text-slate-900 font-mono">
+              <div className="text-2xl font-black text-slate-900 tabular-nums">
                 R {totalCommission.toLocaleString()} ZAR
               </div>
-              <div className="text-xs text-slate-500">From {orders.length} Marketplace Sales</div>
+              <div className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">From {orders.length} Sales</div>
             </div>
 
             <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase text-slate-500">PayPal International (AED / USD)</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">Active</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">PayPal International</span>
+                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter">Active</span>
               </div>
-              <div className="text-2xl font-black text-slate-900 font-mono">
+              <div className="text-2xl font-black text-slate-900 tabular-nums">
                 AED {totalRevenueAED.toLocaleString()}
               </div>
-              <div className="text-xs text-slate-500">{payPalCount} UAE & Diaspora Checkouts</div>
+              <div className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">{payPalCount} Checkouts</div>
             </div>
           </div>
         </div>

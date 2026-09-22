@@ -31,7 +31,8 @@ import {
   Briefcase,
   Zap,
   MapPin,
-  Megaphone
+  Megaphone,
+  Mic
 } from 'lucide-react';
 import { Country, PillarType } from '../types';
 
@@ -206,9 +207,9 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Main Header Row */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-        {/* Brand Logo */}
+      {/* Main Header Row: Zone Contract Implementation */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-8">
+        {/* Zone 1: Brand Wordmark (Single text element) */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
@@ -217,316 +218,80 @@ export const Header: React.FC<HeaderProps> = ({
             }}
             className="flex items-center gap-2.5 text-left group"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-500 to-emerald-600 flex items-center justify-center text-white shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform">
-              <span className="font-extrabold text-lg tracking-tight">MPH</span>
+            <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-lg shadow-slate-950/20 group-hover:bg-amber-600 transition-all">
+              <span className="font-extrabold text-lg tracking-tight font-display">M</span>
             </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-xl tracking-tight text-slate-900 group-hover:text-amber-600 transition-colors">
-                  Market Place Hub
-                </span>
-                <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
-                  Global & Pan-Africa
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium">marketplacehub.company • 55 Regional Subdomains</p>
-            </div>
-          </button>
-        </div>
-
-        {/* Center: Country Selector Button */}
-        <div className="hidden lg:flex items-center">
-          <button
-            onClick={onOpenCountryModal}
-            className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-800 transition-all text-sm font-medium shadow-2xs hover:border-slate-300"
-          >
-            <span className="text-xl leading-none">{currentCountry.flag}</span>
-            <span>{currentCountry.name}</span>
-            <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 font-bold font-mono">
-              {currentCountry.currencyCode} ({currentCountry.currencySymbol})
+            <span className="font-bold text-2xl tracking-tighter text-slate-900 group-hover:text-amber-600 transition-colors font-display">
+              Market Place Hub
             </span>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
           </button>
         </div>
 
-        {/* Right Action Controls */}
-        <div className="flex items-center gap-2">
-          {/* Language Selector */}
-          <div className="relative">
+        {/* Zone 2: Navigation Links (4-6 clean text labels) */}
+        <nav className="hidden lg:flex items-center gap-8">
+          <button onClick={() => { onChangeView('portal'); onSelectPillar('all'); }} className="text-sm font-semibold text-slate-600 hover:text-slate-900 hover:underline underline-offset-4 decoration-amber-500 transition-all">Overview</button>
+          <button onClick={() => { onChangeView('portal'); onSelectPillar('property'); }} className="text-sm font-semibold text-slate-600 hover:text-slate-900 hover:underline underline-offset-4 decoration-amber-500 transition-all">Property</button>
+          <button onClick={() => { onChangeView('portal'); onSelectPillar('service'); }} className="text-sm font-semibold text-slate-600 hover:text-slate-900 hover:underline underline-offset-4 decoration-amber-500 transition-all">Services</button>
+          <button onClick={() => { onChangeView('portal'); onSelectPillar('marketplace'); }} className="text-sm font-semibold text-slate-600 hover:text-slate-900 hover:underline underline-offset-4 decoration-amber-500 transition-all">Marketplace</button>
+          <button onClick={() => { onChangeView('portal'); onSelectPillar('business'); }} className="text-sm font-semibold text-slate-600 hover:text-slate-900 hover:underline underline-offset-4 decoration-amber-500 transition-all">Directory</button>
+        </nav>
+
+        {/* Zone 3: Primary Actions (1-2 high-intent buttons) */}
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 border-r border-slate-200 pr-3 mr-1">
             <button
-              onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
-              className="p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-amber-600 hover:border-amber-300 transition-all flex items-center gap-1 text-xs font-semibold"
-              title="Change Language & RTL Layout"
+              onClick={onOpenAISearch}
+              className="p-2 text-slate-500 hover:text-amber-600 transition-colors"
+              title="AI Search"
             >
-              <Languages className="w-4 h-4 text-slate-500" />
-              <span className="hidden xl:inline uppercase font-mono">{language}</span>
+              <Search className="w-5 h-5" />
             </button>
-
-            {languageMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-2 space-y-1 animate-in fade-in duration-150">
-                <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  Select Language
-                </div>
-                {languages.map((l) => (
-                  <button
-                    key={l.code}
-                    onClick={() => {
-                      onChangeLanguage?.(l.code);
-                      setLanguageMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      language === l.code ? 'bg-amber-50 text-amber-900 font-bold' : 'text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span>{l.flag}</span>
-                      <span>{l.name}</span>
-                    </span>
-                    {language === l.code && <Check className="w-3.5 h-3.5 text-amber-600" />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Notifications Bell */}
-          <div className="relative">
-            <button
-              onClick={() => setNotificationsOpen(!notificationsOpen)}
-              className="relative p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-amber-600 hover:border-amber-300 transition-all"
-              title="Notifications"
-            >
-              <Bell className="w-4 h-4 text-slate-600" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white"></span>
-            </button>
-
-            {notificationsOpen && (
-              <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-3 space-y-2 animate-in fade-in duration-150">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <span className="font-bold text-xs text-slate-900">Notifications</span>
-                  <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-full">
-                    1 New
-                  </span>
-                </div>
-                <div className="space-y-1.5 max-h-64 overflow-y-auto">
-                  {notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      className={`p-2.5 rounded-xl text-xs space-y-0.5 transition-colors ${
-                        n.unread ? 'bg-amber-50/70 border border-amber-200' : 'bg-slate-50 hover:bg-slate-100'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-slate-900 text-xs">{n.title}</span>
-                        <span className="text-[10px] text-slate-400">{n.time}</span>
-                      </div>
-                      <p className="text-[11px] text-slate-600 leading-tight">{n.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Dark Mode Toggle */}
-          <button
-            onClick={onToggleDarkMode}
-            className="p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-amber-600 hover:border-amber-300 transition-all"
-            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
-            {isDarkMode ? (
-              <Sun className="w-4 h-4 text-amber-500" />
-            ) : (
-              <Moon className="w-4 h-4 text-slate-600" />
-            )}
-          </button>
-
-          {/* Ask AI Search Button */}
-          <button
-            onClick={onOpenAISearch}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-indigo-50 to-amber-50 border border-amber-200 hover:border-amber-400 text-slate-800 transition-all shadow-2xs group text-xs sm:text-sm font-semibold"
-          >
-            <Sparkles className="w-4 h-4 text-amber-500 group-hover:rotate-12 transition-transform" />
-            <span className="hidden xl:inline">AI Search</span>
-          </button>
-
-          {/* Gemini Chatbot Button */}
-          {onOpenChatbot && (
-            <button
-              onClick={onOpenChatbot}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 hover:border-amber-500 text-amber-900 transition-all shadow-2xs group text-xs sm:text-sm font-semibold"
-              title="Open Multi-Turn Gemini AI Concierge"
-            >
-              <Bot className="w-4 h-4 text-amber-600 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline">Gemini AI</span>
-            </button>
-          )}
-
-          {/* Live Voice API Button (gemini-3.8-live) */}
-          {onOpenLiveVoice && (
             <button
               onClick={onOpenLiveVoice}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-300 hover:border-rose-500 text-rose-900 transition-all shadow-2xs group text-xs sm:text-sm font-semibold"
-              title="Open Real-Time Voice Conversation (gemini-3.8-live)"
+              className="p-2 text-slate-500 hover:text-rose-600 transition-colors"
+              title="Live Voice"
             >
-              <Flame className="w-4 h-4 text-rose-600 group-hover:animate-bounce transition-transform" />
-              <span className="hidden sm:inline">Live Voice</span>
+              <Mic className="w-5 h-5" />
             </button>
-          )}
+          </div>
 
-          {/* Firebase Google Auth Profile / Sign In */}
-          <div className="relative">
+          <button
+            onClick={onOpenPostListing}
+            className="px-5 py-2.5 bg-slate-900 hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition-all shadow-md active:scale-95 whitespace-nowrap"
+          >
+            Post Listing
+          </button>
+
+          {/* Secondary Actions in a clean dropdown or icon set */}
+          <div className="flex items-center gap-1.5">
             {currentUser ? (
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 p-1.5 pr-2.5 rounded-xl bg-white border border-slate-200 hover:border-amber-300 text-slate-800 transition-all shadow-2xs"
+                className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200 hover:border-amber-400 transition-all"
               >
                 {currentUser.photoURL ? (
-                  <img
-                    src={currentUser.photoURL}
-                    alt={currentUser.displayName || 'User'}
-                    className="w-7 h-7 rounded-lg object-cover"
-                    referrerPolicy="no-referrer"
-                  />
+                  <img src={currentUser.photoURL} alt="User" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-xs">
-                    {(currentUser.displayName || currentUser.email || 'U')[0].toUpperCase()}
-                  </div>
+                  <UserCheck className="w-5 h-5 text-slate-600" />
                 )}
-                <span className="text-xs font-bold hidden md:inline truncate max-w-[100px]">
-                  {currentUser.displayName?.split(' ')[0] || 'My Account'}
-                </span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               </button>
             ) : (
               <button
                 onClick={onSignIn}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-800 transition-all shadow-2xs text-xs sm:text-sm font-semibold"
-                title="Sign in with Google (Firebase Auth)"
+                className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:text-amber-600 hover:bg-amber-50 transition-all"
+                title="Sign In"
               >
-                <LogIn className="w-4 h-4 text-slate-600" />
-                <span className="hidden sm:inline">Sign In</span>
+                <LogIn className="w-5 h-5" />
               </button>
             )}
-
-            {/* User Dropdown */}
-            {currentUser && userMenuOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-3 space-y-2 animate-in fade-in duration-150">
-                <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100">
-                  {currentUser.photoURL ? (
-                    <img
-                      src={currentUser.photoURL}
-                      alt={currentUser.displayName || 'User'}
-                      className="w-9 h-9 rounded-xl object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-sm">
-                      {(currentUser.displayName || currentUser.email || 'U')[0].toUpperCase()}
-                    </div>
-                  )}
-                  <div className="truncate">
-                    <p className="font-bold text-xs text-slate-900 truncate">
-                      {currentUser.displayName || 'Market Place Hub Member'}
-                    </p>
-                    <p className="text-[11px] text-slate-500 truncate">{currentUser.email}</p>
-                  </div>
-                </div>
-
-                <div className="text-[10px] text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 font-medium">
-                  <UserCheck className="w-3.5 h-3.5 shrink-0" />
-                  <span>Cloud Firestore Sync Active</span>
-                </div>
-
-                <div className="pt-1 space-y-1 border-t border-slate-100">
-                  {onOpenUserSettings && (
-                    <button
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        onOpenUserSettings();
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
-                    >
-                      <Bell className="w-4 h-4 text-amber-600" />
-                      <span>Saved Searches &amp; Alerts</span>
-                    </button>
-                  )}
-                  {onOpenReferralProgram && (
-                    <button
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        onOpenReferralProgram();
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
-                    >
-                      <Gift className="w-4 h-4 text-amber-600" />
-                      <span>Invite Vendors (Earn Boosts)</span>
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      setUserMenuOpen(false);
-                      onChangeView('favorites');
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
-                  >
-                    <Heart className="w-4 h-4 text-rose-500" />
-                    <span>My Saved Listings ({savedCount})</span>
-                  </button>
-                </div>
-
-                <div className="pt-1 border-t border-slate-100">
-                  <button
-                    onClick={() => {
-                      setUserMenuOpen(false);
-                      if (onSignOut) onSignOut();
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Sign Out</span>
-                  </button>
-                </div>
-              </div>
-            )}
+            
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
           </div>
-
-          {/* Favorites Button */}
-          <button
-            onClick={() => onChangeView('favorites')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border transition-all text-sm font-semibold shadow-2xs ${
-              currentView === 'favorites'
-                ? 'bg-rose-50 border-rose-300 text-rose-600 shadow-xs'
-                : 'bg-white border-slate-200 text-slate-700 hover:text-rose-600 hover:border-rose-200'
-            }`}
-            title="View Saved Favorites"
-          >
-            <Heart className={`w-4 h-4 ${savedCount > 0 ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}`} />
-            <span className="hidden md:inline">Favorites</span>
-            {savedCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-bold font-mono">
-                {savedCount}
-              </span>
-            )}
-          </button>
-
-          {/* Post a Listing CTA */}
-          <button
-            onClick={onOpenPostListing}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold transition-all shadow-md shadow-amber-600/20 active:scale-98 text-sm"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span className="hidden sm:inline">Post a Listing</span>
-            <span className="sm:hidden">Post</span>
-          </button>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 text-slate-700 hover:bg-slate-100 rounded-lg"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
         </div>
       </div>
 

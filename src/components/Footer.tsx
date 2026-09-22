@@ -37,14 +37,11 @@ export const Footer: React.FC<FooterProps> = ({
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-8 border-b border-slate-800/80">
           <div className="space-y-2 max-w-xl">
             <div className="flex items-center gap-2">
-              <span className="font-black text-xl tracking-tight text-white">
+              <span className="font-black text-2xl tracking-tighter text-white font-display">
                 Market Place Hub
               </span>
-              <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                Pan-Africa &amp; UAE Gateway
-              </span>
             </div>
-            <p className="text-slate-400 text-xs leading-relaxed">
+            <p className="text-slate-400 text-xs leading-relaxed font-medium">
               The premier cross-border commercial nexus connecting 54 African countries and the United Arab Emirates across Marketplace Deals, Verified Business Directory, Accredited Service Artisans, and Prime Real Estate.
             </p>
           </div>

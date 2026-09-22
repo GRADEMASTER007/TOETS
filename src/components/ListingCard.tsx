@@ -96,12 +96,12 @@ export const ListingCard: React.FC<ListingCardProps> = ({
         </button>
 
         {/* Price Tag Overlay */}
-        <div className="absolute bottom-3 left-3 bg-slate-950/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-white shadow-lg">
-          <div className="font-extrabold text-sm sm:text-base font-mono">
+        <div className="absolute bottom-3 left-3 bg-slate-950/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-white shadow-lg">
+          <div className="font-extrabold text-sm sm:text-base tabular-nums">
             {formatPrice(displayPrice, currentCountry.currencyCode, currentCountry.currencySymbol)}
           </div>
           {currentCountry.id !== sourceCountry.id && listing.price > 0 && (
-            <div className="text-[10px] text-slate-300">
+            <div className="text-[10px] text-slate-300 tabular-nums">
               Orig: {listing.currencyCode} {listing.price.toLocaleString()}
             </div>
           )}
@@ -113,7 +113,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({
         <div>
           {/* Category & Location */}
           <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded">
+            <span className="font-bold text-slate-900 uppercase tracking-wider">
               {listing.categoryName}
             </span>
             <div className="flex items-center gap-1 text-slate-500 text-[11px] truncate max-w-[130px]">
@@ -154,7 +154,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({
           {listing.pillar === 'service' && listing.serviceDetails && (
             <div className="flex items-center justify-between text-xs text-slate-600 py-1.5 border-y border-slate-100 my-2">
               <span>{listing.serviceDetails.experienceYears} Years Exp</span>
-              <span className="text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded">
+              <span className="text-emerald-700 font-bold uppercase tracking-tight">
                 {listing.serviceDetails.availability}
               </span>
             </div>
