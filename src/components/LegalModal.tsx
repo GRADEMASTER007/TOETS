@@ -26,8 +26,8 @@ export const LegalModal: React.FC<LegalModalProps> = ({
               <Shield className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold">AfriTrade & UAE Portal Legal & Regulatory Framework</h2>
-              <p className="text-xs text-slate-400">POPIA Act 4 of 2013, GDPR & UAE Data Protection Compliance</p>
+              <h2 className="text-lg font-bold">Market Place Hub Legal & Regulatory Framework</h2>
+              <p className="text-xs text-slate-400">POPIA Act 4 of 2013, GDPR & UAE Data Protection Compliance (marketplacehub.company)</p>
             </div>
           </div>
           <button
@@ -81,7 +81,7 @@ export const LegalModal: React.FC<LegalModalProps> = ({
             <div className="space-y-3">
               <h3 className="font-bold text-slate-900 text-base">Protection of Personal Information Act (POPIA) & Cross-Border Data Flow</h3>
               <p>
-                AfriTrade & UAE Portal adheres strictly to South Africa's Protection of Personal Information Act (POPIA No. 4 of 2013) and UAE Federal Decree-Law No. 45 of 2021 regarding Personal Data Protection.
+                Market Place Hub (marketplacehub.company) adheres strictly to South Africa's Protection of Personal Information Act (POPIA No. 4 of 2013) and UAE Federal Decree-Law No. 45 of 2021 regarding Personal Data Protection.
               </p>
               <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 space-y-1">
                 <div className="font-bold flex items-center gap-1.5">
@@ -105,7 +105,7 @@ export const LegalModal: React.FC<LegalModalProps> = ({
                 We do not sell personal data to third parties. Information collected (e.g. email, WhatsApp phone, listing details, IP geolocation) is strictly used to deliver localized marketplace, business, service, and property discovery across African countries and the UAE.
               </p>
               <p>
-                <strong>Payment Information:</strong> Financial transactions are processed directly by certified Payment Card Industry (PCI-DSS) compliant gateways: PayFast, Yoco, and PayPal. AfriTrade never stores full credit card numbers or banking credentials.
+                <strong>Payment Information:</strong> Financial transactions are processed directly by certified Payment Card Industry (PCI-DSS) compliant gateways: PayFast, Yoco, and PayPal. Market Place Hub never stores full credit card numbers or banking credentials.
               </p>
             </div>
           )}

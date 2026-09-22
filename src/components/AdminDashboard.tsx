@@ -129,13 +129,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <div className="p-6 bg-slate-900 text-white rounded-3xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-slate-800">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-black">AfriTrade & UAE Portal Master CMS</h1>
+            <h1 className="text-xl font-black">Market Place Hub Master CMS</h1>
             <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 font-bold text-xs">
               Super Admin Mode
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Global management for 54 African Union member states, SADC trading bloc & United Arab Emirates subdomains
+            Global management for 55 regional subdomains across Pan-Africa & UAE on marketplacehub.company
           </p>
         </div>
 
@@ -571,7 +571,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
             <div>
               <div className="font-bold text-slate-900">Dynamic XML Sitemap & Robots.txt</div>
-              <div className="text-slate-500">Auto-routes crawlers for 55 country subdomains (e.g. za.yoursite.com/sitemap.xml).</div>
+              <div className="text-slate-500">Auto-routes crawlers for 55 country subdomains (e.g. za.marketplacehub.company/sitemap.xml).</div>
             </div>
             <button
               onClick={() => alert('Sitemap XML regenerated successfully across all 55 active country subdomains.')}

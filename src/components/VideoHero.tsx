@@ -121,7 +121,7 @@ export const VideoHero: React.FC<VideoHeroProps> = ({
              onClick={onOpenCountryModal}>
           <span className="text-xl leading-none">{currentCountry.flag}</span>
           <span>Browsing: <strong>{currentCountry.name}</strong></span>
-          <span className="font-mono text-amber-300 font-semibold">({currentCountry.subdomain}.afritrade.com)</span>
+          <span className="font-mono text-amber-300 font-semibold">({currentCountry.subdomain}.marketplacehub.company)</span>
           <span className="text-slate-300">|</span>
           <span className="text-amber-400 underline underline-offset-2">Change Region</span>
         </div>

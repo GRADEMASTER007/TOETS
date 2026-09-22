@@ -126,7 +126,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span>Live Regional Subdomain:</span>
             <span className="font-mono text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-              {currentCountry.subdomain}.afritrade.com
+              {currentCountry.subdomain}.marketplacehub.company
             </span>
           </div>
           <span className="text-slate-500 hidden md:inline">|</span>
@@ -203,18 +203,18 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-2.5 text-left group"
           >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-500 to-emerald-600 flex items-center justify-center text-white shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform">
-              <span className="font-extrabold text-xl tracking-tight">AT</span>
+              <span className="font-extrabold text-lg tracking-tight">MPH</span>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-xl tracking-tight text-slate-900 group-hover:text-amber-600 transition-colors">
-                  AfriTrade
+                  Market Place Hub
                 </span>
                 <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
-                  + UAE
+                  Global & Pan-Africa
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 font-medium">Pan-African & Gulf Commerce Hub</p>
+              <p className="text-[11px] text-slate-500 font-medium">marketplacehub.company • 55 Regional Subdomains</p>
             </div>
           </button>
         </div>
@@ -412,7 +412,7 @@ export const Header: React.FC<HeaderProps> = ({
                   )}
                   <div className="truncate">
                     <p className="font-bold text-xs text-slate-900 truncate">
-                      {currentUser.displayName || 'AfriTrade User'}
+                      {currentUser.displayName || 'Market Place Hub Member'}
                     </p>
                     <p className="text-[11px] text-slate-500 truncate">{currentUser.email}</p>
                   </div>
@@ -513,7 +513,7 @@ export const Header: React.FC<HeaderProps> = ({
               <div>
                 <div className="font-bold text-slate-900 text-sm">{currentCountry.name}</div>
                 <div className="text-xs text-slate-500 font-mono">
-                  {currentCountry.subdomain}.afritrade.com • {currentCountry.currencyCode}
+                  {currentCountry.subdomain}.marketplacehub.company • {currentCountry.currencyCode}
                 </div>
               </div>
             </div>

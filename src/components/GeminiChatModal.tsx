@@ -178,7 +178,7 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-slate-900 dark:text-white text-base">AfriTrade & UAE Gemini Concierge</h3>
+                <h3 className="font-bold text-slate-900 dark:text-white text-base">Market Place Hub Gemini Concierge</h3>
                 <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300">
                   {modelChoice}
                 </span>

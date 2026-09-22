@@ -43,7 +43,7 @@ export const AISearchModal: React.FC<AISearchModalProps> = ({
   const [messages, setMessages] = useState<{ sender: 'buyer' | 'ai'; text: string; matchedCount?: number }[]>([
     {
       sender: 'ai',
-      text: `Hello! I am your AI Commerce Concierge for ${currentCountry.name} (${currentCountry.subdomain}.afritrade.com). What are you looking to buy, rent, or hire today?`,
+      text: `Hello! I am your AI Commerce Concierge for ${currentCountry.name} (${currentCountry.subdomain}.marketplacehub.company). What are you looking to buy, rent, or hire today?`,
     },
   ]);
 

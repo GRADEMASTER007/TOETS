@@ -83,23 +83,92 @@ import {
   Check
 } from 'lucide-react';
 
+// Intelligent Subdomain & GEO Country Resolution
+function resolveInitialCountry(countryList: Country[]): Country {
+  if (typeof window !== 'undefined') {
+    // 1. Detect subdomain (e.g. za.marketplacehub.company, ae.marketplacehub.company)
+    const hostname = window.location.hostname.toLowerCase();
+    const parts = hostname.split('.');
+    if (parts.length >= 2) {
+      const candidateSub = parts[0];
+      if (candidateSub !== 'www' && candidateSub !== 'marketplacehub' && candidateSub !== 'ais-dev' && candidateSub !== 'ais-pre') {
+        const matchSub = countryList.find(
+          (c) => c.subdomain.toLowerCase() === candidateSub || c.isoCode.toLowerCase() === candidateSub
+        );
+        if (matchSub) return matchSub;
+      }
+    }
+
+    // 2. Detect URL search query parameters (?country=ae, ?geo=ke, ?subdomain=ng)
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const queryParam = (params.get('country') || params.get('geo') || params.get('subdomain') || '').toLowerCase();
+      if (queryParam) {
+        const matchParam = countryList.find(
+          (c) => c.subdomain.toLowerCase() === queryParam || c.isoCode.toLowerCase() === queryParam || c.id.toLowerCase() === queryParam
+        );
+        if (matchParam) return matchParam;
+      }
+    } catch {
+      // ignore
+    }
+
+    // 3. Detect saved user preference
+    const savedId = localStorage.getItem('mph_country_id') || localStorage.getItem('afritrade_country_id');
+    if (savedId) {
+      const found = countryList.find((c: Country) => c.id === savedId);
+      if (found) return found;
+    }
+
+    // 4. Geo-detect by browser timezone
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone.toLowerCase();
+      if (tz.includes('dubai') || tz.includes('uae')) {
+        const match = countryList.find((c) => c.id === 'ae');
+        if (match) return match;
+      } else if (tz.includes('nairobi')) {
+        const match = countryList.find((c) => c.id === 'ke');
+        if (match) return match;
+      } else if (tz.includes('lagos')) {
+        const match = countryList.find((c) => c.id === 'ng');
+        if (match) return match;
+      } else if (tz.includes('cairo')) {
+        const match = countryList.find((c) => c.id === 'eg');
+        if (match) return match;
+      } else if (tz.includes('accra')) {
+        const match = countryList.find((c) => c.id === 'gh');
+        if (match) return match;
+      } else if (tz.includes('gaborone')) {
+        const match = countryList.find((c) => c.id === 'bw');
+        if (match) return match;
+      } else if (tz.includes('windhoek')) {
+        const match = countryList.find((c) => c.id === 'na');
+        if (match) return match;
+      } else if (tz.includes('kigali')) {
+        const match = countryList.find((c) => c.id === 'rw');
+        if (match) return match;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // Anchor Market Default: South Africa (ZA)
+  return countryList.find((c: Country) => c.id === 'za') || countryList[0];
+}
+
 export function App() {
-  // 1. Regional Country State (Persisted in localStorage)
+  // 1. Regional Country State (Persisted in localStorage & Subdomain/GEO detected)
   const [countries, setCountries] = useState<Country[]>(() => {
     return allAfricanCountries;
   });
 
   const [currentCountry, setCurrentCountry] = useState<Country>(() => {
-    const savedId = localStorage.getItem('afritrade_country_id');
-    if (savedId) {
-      const found = allAfricanCountries.find((c: Country) => c.id === savedId);
-      if (found) return found;
-    }
-    // Default to South Africa (Anchor Market)
-    return allAfricanCountries.find((c: Country) => c.id === 'za') || allAfricanCountries[0];
+    return resolveInitialCountry(allAfricanCountries);
   });
 
   useEffect(() => {
+    localStorage.setItem('mph_country_id', currentCountry.id);
     localStorage.setItem('afritrade_country_id', currentCountry.id);
   }, [currentCountry]);
 
@@ -120,9 +189,31 @@ export function App() {
   const [aiFilteredIds, setAiFilteredIds] = useState<string[] | null>(null);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
 
+  // Dynamic SEO & Canonical synchronization
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const pillarName = activePillar !== 'all' ? `${activePillar.charAt(0).toUpperCase() + activePillar.slice(1)} | ` : '';
+    document.title = `${pillarName}Market Place Hub – ${currentCountry.name} (${currentCountry.subdomain}.marketplacehub.company)`;
+
+    // Update canonical link
+    let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = `https://${currentCountry.subdomain}.marketplacehub.company/${activePillar !== 'all' ? activePillar : ''}`;
+
+    // Update Geo Meta Tags
+    let geoRegion = document.querySelector<HTMLMetaElement>('meta[name="geo.region"]');
+    if (geoRegion) geoRegion.content = currentCountry.isoCode;
+    let geoPlace = document.querySelector<HTMLMetaElement>('meta[name="geo.placename"]');
+    if (geoPlace) geoPlace.content = `${currentCountry.name}, ${currentCountry.region}`;
+  }, [currentCountry, activePillar]);
+
   // 4. Saved / Favorites
   const [savedIds, setSavedIds] = useState<string[]>(() => {
-    const saved = localStorage.getItem('afritrade_saved_ids');
+    const saved = localStorage.getItem('mph_saved_ids') || localStorage.getItem('afritrade_saved_ids');
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -148,6 +239,7 @@ export function App() {
   }, []);
 
   useEffect(() => {
+    localStorage.setItem('mph_saved_ids', JSON.stringify(savedIds));
     localStorage.setItem('afritrade_saved_ids', JSON.stringify(savedIds));
   }, [savedIds]);
 
@@ -200,15 +292,16 @@ export function App() {
 
   // Dark mode & language & RTL state
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    return localStorage.getItem('afritrade_dark_mode') === 'true';
+    return (localStorage.getItem('mph_dark_mode') || localStorage.getItem('afritrade_dark_mode')) === 'true';
   });
 
   const [language, setLanguage] = useState<'en' | 'ar' | 'fr' | 'sw' | 'pt'>(() => {
-    return (localStorage.getItem('afritrade_lang') as any) || 'en';
+    return ((localStorage.getItem('mph_lang') || localStorage.getItem('afritrade_lang')) as any) || 'en';
   });
 
   // Handle dark mode effect on body / root
   useEffect(() => {
+    localStorage.setItem('mph_dark_mode', String(isDarkMode));
     localStorage.setItem('afritrade_dark_mode', String(isDarkMode));
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -219,6 +312,7 @@ export function App() {
 
   // Handle language and RTL direction
   useEffect(() => {
+    localStorage.setItem('mph_lang', language);
     localStorage.setItem('afritrade_lang', language);
     if (language === 'ar') {
       document.documentElement.setAttribute('dir', 'rtl');
@@ -683,12 +777,12 @@ export function App() {
             <div>
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 font-black flex items-center justify-center text-base">
-                  AT
+                  MPH
                 </div>
-                <span className="font-black text-xl text-white">AfriTrade & UAE Portal</span>
+                <span className="font-black text-xl text-white">Market Place Hub</span>
               </div>
               <p className="text-slate-400 mt-1 max-w-md text-xs">
-                Pan-African Marketplace, Business Directory, Trades Directory, and Property Portal with AI Search and instant PayPal, PayFast & Yoco placements.
+                Pan-African Marketplace, Business Directory, Trades Directory, and Property Portal across 55 regional subdomains on marketplacehub.company.
               </p>
             </div>
 
@@ -733,7 +827,7 @@ export function App() {
                 >
                   <span>{c.flag}</span>
                   <span>{c.name}</span>
-                  <span className="text-[10px] text-slate-600 font-mono">({c.subdomain})</span>
+                  <span className="text-[10px] text-slate-600 font-mono">({c.subdomain}.marketplacehub.company)</span>
                 </button>
               ))}
             </div>
@@ -741,7 +835,7 @@ export function App() {
 
           <div className="pt-6 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4 text-[11px] text-slate-500">
             <div>
-              © 2026 AfriTrade & UAE Portal Ltd. All rights reserved. SADC, AfCFTA & Gulf Commerce Gateway.
+              © 2026 Market Place Hub (marketplacehub.company). All rights reserved. SADC, AfCFTA & Gulf Commerce Gateway.
             </div>
             <div className="flex flex-wrap items-center gap-3 text-slate-400">
               <button

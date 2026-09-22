@@ -43,7 +43,7 @@ export const LiveVoiceModal: React.FC<LiveVoiceModalProps> = ({
     {
       id: 'init_live',
       sender: 'model',
-      text: `Hello! I am your AfriTrade Live Voice Concierge powered by gemini-3.8-live. Tap the microphone and tell me what you need—whether it's property in Sandton, UAE freight corridors, or certified electricians.`,
+      text: `Hello! I am your Market Place Hub Live Voice Concierge powered by gemini-3.8-live. Tap the microphone and tell me what you need—whether it's property in Sandton, UAE freight corridors, or certified electricians.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }
   ]);
@@ -250,7 +250,7 @@ export const LiveVoiceModal: React.FC<LiveVoiceModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-white text-base">AfriTrade Live Voice</h3>
+                <h3 className="font-bold text-white text-base">Market Place Hub Live Voice</h3>
                 <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
                   gemini-3.8-live
                 </span>

@@ -67,7 +67,7 @@ export const CountrySelectorModal: React.FC<CountrySelectorModalProps> = ({
             <span className="text-base">{currentCountry.flag}</span>
             <strong className="text-slate-900">{currentCountry.name}</strong>
             <span className="font-mono bg-white px-2 py-0.5 rounded border border-amber-200 text-amber-900 font-semibold">
-              {currentCountry.subdomain}.afritrade.com
+              {currentCountry.subdomain}.marketplacehub.company
             </span>
           </div>
           <div className="text-slate-600 font-medium hidden sm:block">
@@ -133,7 +133,7 @@ export const CountrySelectorModal: React.FC<CountrySelectorModalProps> = ({
                       )}
                     </div>
                     <div className="text-xs text-slate-500 font-mono mt-0.5">
-                      {c.subdomain}.afritrade.com
+                      {c.subdomain}.marketplacehub.company
                     </div>
                     <div className="mt-1 flex items-center gap-1.5">
                       <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-mono">

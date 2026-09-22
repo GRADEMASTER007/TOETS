@@ -52,7 +52,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({
   const openWhatsApp = (e: React.MouseEvent) => {
     e.stopPropagation();
     const message = encodeURIComponent(
-      `Hi ${listing.vendor.name}, I am interested in your listing "${listing.title}" on AfriTrade (${currentCountry.subdomain}.afritrade.com). Is it still available?`
+      `Hi ${listing.vendor.name}, I am interested in your listing "${listing.title}" on Market Place Hub (${currentCountry.subdomain}.marketplacehub.company). Is it still available?`
     );
     window.open(`https://wa.me/${listing.vendor.whatsapp}?text=${message}`, '_blank');
   };

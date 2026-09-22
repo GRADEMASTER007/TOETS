@@ -11,13 +11,14 @@ export const CookieBanner: React.FC<CookieBannerProps> = ({ onOpenLegal, onOpenP
   const handleOpenInfo = onOpenPrivacy || onOpenLegal || (() => {});
 
   useEffect(() => {
-    const isConsentGiven = localStorage.getItem('afritrade_cookie_consent');
+    const isConsentGiven = localStorage.getItem('mph_cookie_consent') || localStorage.getItem('afritrade_cookie_consent');
     if (!isConsentGiven) {
       setAccepted(false);
     }
   }, []);
 
   const handleAccept = () => {
+    localStorage.setItem('mph_cookie_consent', 'true');
     localStorage.setItem('afritrade_cookie_consent', 'true');
     setAccepted(true);
   };

@@ -55,9 +55,9 @@ export const DeliverablesExplorerModal: React.FC<DeliverablesExplorerModalProps>
               <FileCode className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold">AfriTrade & UAE Portal: Master Technical Deliverables</h2>
+              <h2 className="text-lg font-bold">Market Place Hub: Master Technical Deliverables</h2>
               <p className="text-xs text-slate-400">
-                Architectural blueprint, SQL/NoSQL schemas, gateway integrations & regional rollout plan
+                Architectural blueprint, SQL/NoSQL schemas, gateway integrations & regional rollout plan across 55 subdomains (marketplacehub.company)
               </p>
             </div>
           </div>
@@ -123,7 +123,7 @@ export const DeliverablesExplorerModal: React.FC<DeliverablesExplorerModalProps>
                   <ul className="space-y-1 text-xs text-slate-600 list-disc list-inside">
                     <li><strong>API Runtime:</strong> Node.js with Express / Fastify / Cloud Run Microservices</li>
                     <li><strong>Deployment:</strong> Google Cloud Run (Johannesburg <code>africa-south1</code> + Dubai <code>me-central2</code>)</li>
-                    <li><strong>Edge Ingress:</strong> Cloudflare Enterprise / Google Cloud Armor for DDoS & multi-tenant SSL wildcards (<code>*.afritrade.com</code>)</li>
+                    <li><strong>Edge Ingress:</strong> Cloudflare Enterprise / Google Cloud Armor for DDoS & multi-tenant SSL wildcards (<code>*.marketplacehub.company</code>)</li>
                   </ul>
                 </div>
 
@@ -165,7 +165,7 @@ export const DeliverablesExplorerModal: React.FC<DeliverablesExplorerModalProps>
               <div className="p-4 bg-slate-950 text-emerald-400 font-mono text-xs rounded-2xl overflow-x-auto space-y-1 leading-relaxed">
                 <pre>{`
 / (Global Landing Page & African Union + UAE Hub Selector)
-├── [country-subdomain].afritrade.com (e.g. za.afritrade.com, ae.afritrade.com, ke.afritrade.com)
+├── [country-subdomain].marketplacehub.company (e.g. za.marketplacehub.company, ae.marketplacehub.company, ke.marketplacehub.company)
 │   ├── /marketplace (Pillar 1: Consumer Goods, Vehicles, Industrial)
 │   │   ├── /vehicles
 │   │   ├── /electronics-gadgets
@@ -240,7 +240,7 @@ export const DeliverablesExplorerModal: React.FC<DeliverablesExplorerModalProps>
                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
                   <h4 className="font-bold text-slate-900 mb-2">Homepage & Portal Wireframe</h4>
                   <div className="space-y-2 text-xs font-mono text-slate-600">
-                    <div className="p-2 bg-slate-200 rounded text-center">[Subdomain & Country Bar] za.afritrade.com | ZAR</div>
+                    <div className="p-2 bg-slate-200 rounded text-center">[Subdomain & Country Bar] za.marketplacehub.company | ZAR</div>
                     <div className="p-2 bg-slate-200 rounded text-center">[Header] Logo | 4 Pillars | Ask AI | Post Listing CTA</div>
                     <div className="p-4 bg-slate-300 rounded text-center font-bold">[Video Hero Banner + AI Natural Search Bar + Voice Mic]</div>
                     <div className="p-2 bg-amber-100 text-amber-900 rounded text-center">[VIP Spotlight Carousel] Top-Tier Boosted Listings</div>
@@ -285,7 +285,7 @@ export const DeliverablesExplorerModal: React.FC<DeliverablesExplorerModalProps>
                     <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded">Launch Target</span>
                   </div>
                   <p className="text-xs text-slate-600 mt-1">
-                    Deploy core platform on <code>za.afritrade.com</code>. Integrate PayFast & Yoco for instant EFT and card checkouts. Seed Sandton/Cape Town real estate, solar/electrical COC services, and vehicle trade.
+                    Deploy core platform on <code>za.marketplacehub.company</code>. Integrate PayFast & Yoco for instant EFT and card checkouts. Seed Sandton/Cape Town real estate, solar/electrical COC services, and vehicle trade.
                   </p>
                 </div>
 
@@ -305,7 +305,7 @@ export const DeliverablesExplorerModal: React.FC<DeliverablesExplorerModalProps>
                     <span className="text-[10px] bg-purple-200 text-purple-900 px-2 py-0.5 rounded">Gulf Capital Flow</span>
                   </div>
                   <p className="text-xs text-slate-600 mt-1">
-                    Deploy <code>ae.afritrade.com</code> with AED currency and PayPal integration. Target Dubai/Abu Dhabi luxury real estate investors, commodity trade houses, and African diaspora entrepreneurs.
+                    Deploy <code>ae.marketplacehub.company</code> with AED currency and PayPal integration. Target Dubai/Abu Dhabi luxury real estate investors, commodity trade houses, and African diaspora entrepreneurs.
                   </p>
                 </div>
 

@@ -72,8 +72,8 @@ export const ListingDetailModal: React.FC<ListingDetailModalProps> = ({
   const listingReviews = reviews.filter((r) => r.listingId === listing.id);
 
   const handleShare = (platform: 'whatsapp' | 'x' | 'facebook' | 'linkedin' | 'copy') => {
-    const url = `${window.location.origin}/#listing-${listing.id}`;
-    const text = `Check out "${listing.title}" on AfriTrade (${currentCountry.name}): ${url}`;
+    const url = `https://${currentCountry.subdomain}.marketplacehub.company/#listing-${listing.id}`;
+    const text = `Check out "${listing.title}" on Market Place Hub (${currentCountry.name}): ${url}`;
 
     if (platform === 'whatsapp') {
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
@@ -180,7 +180,7 @@ export const ListingDetailModal: React.FC<ListingDetailModalProps> = ({
 
   const openWhatsAppDirect = () => {
     const message = encodeURIComponent(
-      `Hi ${listing.vendor.name}, I am contacting you regarding your listing "${listing.title}" on AfriTrade (${currentCountry.subdomain}.afritrade.com). Please provide more information.`
+      `Hi ${listing.vendor.name}, I am contacting you regarding your listing "${listing.title}" on Market Place Hub (${currentCountry.subdomain}.marketplacehub.company). Please provide more information.`
     );
     window.open(`https://wa.me/${listing.vendor.whatsapp}?text=${message}`, '_blank');
   };

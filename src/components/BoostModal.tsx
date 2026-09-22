@@ -142,14 +142,15 @@ export const BoostModal: React.FC<BoostModalProps> = ({
     if (!completedTransaction) return;
     const invoiceContent = `
 ==================================================
-           AFRITRADE & UAE PORTAL
-           TAX INVOICE / RECEIPT
+           MARKET PLACE HUB
+        TAX INVOICE / RECEIPT
+       (marketplacehub.company)
 ==================================================
 Invoice No:    ${completedTransaction.invoiceNumber}
 Date:          ${completedTransaction.date}
 Payment Gateway:${completedTransaction.gateway.toUpperCase()}
 Reference:     ${completedTransaction.reference}
-Country/Region:${currentCountry.name} (${currentCountry.subdomain}.afritrade.com)
+Country/Region:${currentCountry.name} (${currentCountry.subdomain}.marketplacehub.company)
 
 CUSTOMER DETAILS:
 Vendor:        ${listing.vendor.name}
@@ -164,7 +165,7 @@ Duration:      ${selectedPlan.durationDays} Days Active
 TOTAL AMOUNT:  ${currentCountry.currencySymbol} ${completedTransaction.amount} ${completedTransaction.currency}
 STATUS:        PAID & ACTIVATED
 ==================================================
-Thank you for promoting your business with AfriTrade!
+Thank you for promoting your business with Market Place Hub!
 `;
     const blob = new Blob([invoiceContent], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);

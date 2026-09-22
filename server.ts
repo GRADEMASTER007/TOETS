@@ -38,9 +38,63 @@ function getAI(): GoogleGenAI | null {
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({
     status: 'ok',
-    service: 'AfriTrade & UAE Platform Engine',
+    service: 'Market Place Hub Platform Engine',
+    domain: 'marketplacehub.company',
     hasApiKey: !!process.env.GEMINI_API_KEY,
     timestamp: new Date().toISOString(),
+  });
+});
+
+// ==========================================
+// SEO: ROBOTS.TXT & SITEMAP.XML
+// ==========================================
+app.get('/robots.txt', (req: Request, res: Response) => {
+  res.type('text/plain');
+  res.send(`User-agent: *
+Allow: /
+Sitemap: https://marketplacehub.company/sitemap.xml
+`);
+});
+
+app.get('/sitemap.xml', (req: Request, res: Response) => {
+  const subdomains = [
+    'za', 'ae', 'ng', 'ke', 'gh', 'eg', 'ma', 'rw', 'ug', 'et', 
+    'ci', 'sn', 'cm', 'na', 'bw', 'zw', 'mz', 'zm', 'mw', 'ls', 
+    'sz', 'mg', 'mu', 'sc', 'ao', 'cd', 'tz'
+  ];
+  const pillars = ['marketplace', 'businesses', 'services', 'property'];
+  const today = new Date().toISOString().split('T')[0];
+  
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+  xml += `  <url>\n    <loc>https://marketplacehub.company/</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
+  
+  for (const p of pillars) {
+    xml += `  <url>\n    <loc>https://marketplacehub.company/${p}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.9</priority>\n  </url>\n`;
+  }
+  
+  for (const sub of subdomains) {
+    xml += `  <url>\n    <loc>https://${sub}.marketplacehub.company/</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.85</priority>\n  </url>\n`;
+    for (const p of pillars) {
+      xml += `  <url>\n    <loc>https://${sub}.marketplacehub.company/${p}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.75</priority>\n  </url>\n`;
+    }
+  }
+  
+  xml += `</urlset>`;
+  res.type('application/xml');
+  res.send(xml);
+});
+
+// Geo and subdomain resolver endpoint
+app.get('/api/geo/detect', (req: Request, res: Response) => {
+  const host = req.headers.host || '';
+  const sub = host.split('.')[0]?.toLowerCase();
+  const cfCountry = (req.headers['cf-ipcountry'] || req.headers['x-country-code'] || '') as string;
+  
+  res.json({
+    domain: 'marketplacehub.company',
+    detectedSubdomain: sub && sub !== 'www' && sub !== 'marketplacehub' ? sub : null,
+    detectedGeoCountry: cfCountry || null,
+    canonicalBaseUrl: 'https://marketplacehub.company',
   });
 });
 
@@ -62,7 +116,7 @@ app.post('/api/ai/search', async (req: Request, res: Response) => {
         ? 'gemini-3.1-flash-lite'
         : 'gemini-3.5-flash';
 
-  const systemInstruction = `You are the AI Search Assistant for "AfriTrade & UAE Portal", a multi-country marketplace, business directory, service directory, and property portal covering African Union countries, SADC bloc, and the UAE.
+  const systemInstruction = `You are the AI Search Assistant for "Market Place Hub" (https://marketplacehub.company), a multi-country marketplace, business directory, service directory, and property portal covering African Union countries, SADC bloc, and the UAE across regional subdomains (e.g. za.marketplacehub.company, ae.marketplacehub.company).
 Your goal is to parse user natural language queries (e.g., "3 bedroom house in Sandton under R15000", "electrician near me", "used iPhone 13 under R8000") and match them against the available listings.
 Respond in valid JSON format:
 {
@@ -203,30 +257,30 @@ app.post('/api/ai/chat', async (req: Request, res: Response) => {
 
   // Define role-specific system instructions
   const roleSystemInstructions: Record<string, string> = {
-    general_portal: `You are "AfriTrade & UAE Portal Concierge", a warm, highly knowledgeable trade, property, and business specialist for African Union nations, the SADC economic bloc, and the United Arab Emirates (Dubai, Abu Dhabi).
+    general_portal: `You are "Market Place Hub AI Concierge" (marketplacehub.company), a warm, highly knowledgeable trade, property, and business specialist for African Union nations, the SADC economic bloc, and the United Arab Emirates (Dubai, Abu Dhabi).
 Current Country ISO: ${countryCode}.
-Help buyers and vendors navigate the 4 core pillars: Marketplace, Business Directory, Service Directory, and Property Portal.
+Help buyers and vendors navigate the 4 core pillars: Marketplace, Business Directory, Service Directory, and Property Portal across national subdomains (e.g. za.marketplacehub.company, ae.marketplacehub.company).
 Maintain conversational context, quote prices in relevant local currencies (ZAR, AED, NGN, KES, BWP, etc.), and provide direct recommendations.`,
 
-    trade_advisor: `You are "AfriTrade Cross-Border & Customs Advisor". You specialize in:
+    trade_advisor: `You are "Market Place Hub Cross-Border & Customs Advisor". You specialize in:
 - AfCFTA (African Continental Free Trade Area) rules of origin, preferential tariffs, and trade corridors.
 - SADC Trade Protocol, COMESA, and ECOWAS customs declarations.
 - UAE - Africa bilateral trade: Dubai Multi Commodities Centre (DMCC), Jebel Ali Port (DP World), air cargo via Emirates SkyCargo / Ethiopian Airlines cargo.
 - Currency hedging, Letters of Credit, escrow payments, and regulatory compliance.
-Keep advice actionable, practical, and tailored to businesses operating between Africa and the UAE.`,
+Keep advice actionable, practical, and tailored to businesses operating between Africa and the UAE on marketplacehub.company.`,
 
-    property_specialist: `You are "AfriTrade Real Estate & Property Specialist". You specialize in:
+    property_specialist: `You are "Market Place Hub Real Estate & Property Specialist". You specialize in:
 - Residential and commercial property investments across Sandton, Cape Town, Nairobi, Kigali, Lagos, and Dubai (Marina, Downtown, Palm Jumeirah).
 - South African Deeds Registry process, Transfer Duty, Sectional Title acts, and tenant-landlord regulations.
 - Dubai Land Department (DLD) regulations, freehold zones, Ejari contracts, and golden visa property thresholds.
 - Calculating yields, rental returns, and comparing erf / square-footage pricing in local currency.`,
 
-    artisan_scout: `You are "AfriTrade Master Artisan & Services Scout". You specialize in:
+    artisan_scout: `You are "Market Place Hub Master Artisan & Services Scout". You specialize in:
 - Connecting clients with accredited service providers: Department of Labour (DoL) certified Master Electricians, SAPVIA PV GreenCard solar installers, and PIRB-registered plumbers.
 - Construction, renovations, solar backup & inverter installations for load shedding resilience.
 - Pricing estimates for call-out fees, Certificates of Compliance (CoC), and standard artisan labor rates.`,
 
-    b2b_logistics: `You are "AfriTrade Freight & Logistics Dispatcher". You specialize in:
+    b2b_logistics: `You are "Market Place Hub Freight & Logistics Dispatcher". You specialize in:
 - Freight corridors: Walvis Bay corridor, Beitbridge border post (SA - Zim - Zambia), Durban harbor container logistics, and Jebel Ali maritime trade.
 - Full Container Load (FCL), Less than Container Load (LCL), cross-border road freight permits, and clearing agent requirements.
 - Port turnaround times, road transit documentation (SAD 500, EUR.1, Certificate of Origin).`
@@ -589,7 +643,7 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`AfriTrade & UAE Portal running at http://0.0.0.0:${PORT}`);
+    console.log(`Market Place Hub (marketplacehub.company) running at http://0.0.0.0:${PORT}`);
   });
 }
 

@@ -410,7 +410,7 @@ export const VendorDashboard: React.FC<VendorDashboardProps> = ({
                     <td className="p-4 text-right">
                       <button
                         onClick={() => {
-                          const content = `AFRITRADE INVOICE: ${tx.invoiceNumber}\nListing: ${tx.listingTitle}\nAmount: ${tx.currency} ${tx.amount}\nGateway: ${tx.gateway}\nStatus: ${tx.status}`;
+                          const content = `MARKET PLACE HUB (marketplacehub.company)\nTAX INVOICE: ${tx.invoiceNumber}\nListing: ${tx.listingTitle}\nAmount: ${tx.currency} ${tx.amount}\nGateway: ${tx.gateway}\nStatus: ${tx.status}`;
                           const blob = new Blob([content], { type: 'text/plain' });
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement('a');
@@ -555,7 +555,7 @@ export const VendorDashboard: React.FC<VendorDashboardProps> = ({
                 <h2 className="text-lg font-black text-slate-900">Vendor Referral Program</h2>
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                Invite fellow contractors, business owners, or property agents to join AfriTrade & UAE Portal.
+                Invite fellow contractors, business owners, or property agents to join Market Place Hub (marketplacehub.company).
               </p>
             </div>
             <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-right">
@@ -571,12 +571,12 @@ export const VendorDashboard: React.FC<VendorDashboardProps> = ({
                 <input
                   type="text"
                   readOnly
-                  value="https://afritrade.com/join?ref=ZA-VND-8821"
+                  value="https://marketplacehub.company/join?ref=ZA-VND-8821"
                   className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs text-slate-800"
                 />
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText('https://afritrade.com/join?ref=ZA-VND-8821');
+                    navigator.clipboard.writeText('https://marketplacehub.company/join?ref=ZA-VND-8821');
                     setCopiedRef(true);
                     setTimeout(() => setCopiedRef(false), 2000);
                   }}

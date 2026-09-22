@@ -112,7 +112,7 @@ export const PostListingWizard: React.FC<PostListingWizardProps> = ({
       subcategory: subcategory || selectedCategoryObj?.subcategories[0] || 'General',
       price: Number(price) || 0,
       currencyCode: currentCountry.currencyCode,
-      description: description || 'Quality offering listed on AfriTrade & UAE Portal.',
+      description: description || 'Quality offering listed on Market Place Hub (marketplacehub.company).',
       images: imageUrls.length > 0 ? imageUrls : ['https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1000&q=80'],
       featuredTier: selectedBoost,
       featuredDaysLeft: selectedBoost === 'three_months' ? 90 : selectedBoost === 'month' ? 30 : selectedBoost === 'week' ? 7 : 0,
@@ -186,7 +186,7 @@ export const PostListingWizard: React.FC<PostListingWizardProps> = ({
               <span className="text-base">{currentCountry.flag}</span>
               <h2 className="text-lg font-bold text-slate-900">Post a New Listing</h2>
               <span className="text-xs font-mono text-amber-700 bg-amber-100 px-2 py-0.5 rounded font-semibold">
-                {currentCountry.subdomain}.afritrade.com
+                {currentCountry.subdomain}.marketplacehub.company
               </span>
             </div>
             <p className="text-xs text-slate-500">Step {step} of 5: Create and publish your offering</p>
