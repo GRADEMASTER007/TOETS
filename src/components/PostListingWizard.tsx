@@ -15,7 +15,13 @@ import {
   Sparkles,
   Phone,
   MessageCircle,
-  Mail
+  Mail,
+  Car,
+  Truck,
+  Briefcase,
+  Briefcase as JobIcon,
+  Globe,
+  Waves
 } from 'lucide-react';
 import { BoostPlan, Category, Country, Listing, PillarType } from '../types';
 
@@ -75,6 +81,25 @@ export const PostListingWizard: React.FC<PostListingWizardProps> = ({
 
   const [openingHours, setOpeningHours] = useState('Mon - Sat: 08:00 - 18:00');
   const [website, setWebsite] = useState('');
+  const [industry, setIndustry] = useState('');
+
+  // Motor Details
+  const [make, setMake] = useState('');
+  const [motorModel, setMotorModel] = useState('');
+  const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [mileage, setMileage] = useState<number>(0);
+  const [fuel, setFuel] = useState<'Petrol' | 'Diesel' | 'Electric' | 'Hybrid' | 'Gas'>('Petrol');
+  const [transmission, setTransmission] = useState<'Automatic' | 'Manual'>('Automatic');
+  const [motorCondition, setMotorCondition] = useState<'New' | 'Used' | 'Classic'>('Used');
+
+  // Job Details
+  const [company, setCompany] = useState('');
+  const [jobType, setJobType] = useState<'Full-time' | 'Part-time' | 'Contract' | 'Freelance' | 'Internship'>('Full-time');
+  const [salaryRange, setSalaryRange] = useState('');
+  const [remote, setRemote] = useState(false);
+
+  // Hybrid Transaction Choice
+  const [allowPlatformCheckout, setAllowPlatformCheckout] = useState(false);
 
   // Images
   const [imageUrls, setImageUrls] = useState<string[]>([
@@ -89,7 +114,7 @@ export const PostListingWizard: React.FC<PostListingWizardProps> = ({
   const [vendorEmail, setVendorEmail] = useState('contact@mybusiness.co.za');
 
   // Selected boost
-  const [selectedBoost, setSelectedBoost] = useState<'free' | 'week' | 'month' | 'three_months'>('week');
+  const [selectedBoost, setSelectedBoost] = useState<'free' | 'bump' | 'week' | 'month' | 'three_months'>('week');
 
   if (!isOpen) return null;
 
@@ -181,7 +206,35 @@ export const PostListingWizard: React.FC<PostListingWizardProps> = ({
         openingHours,
         website,
         foundedYear: 2020,
+        industry,
       };
+    } else if (pillar === 'motors') {
+      newListing.motorDetails = {
+        make,
+        model: motorModel,
+        year,
+        mileage,
+        fuel,
+        transmission,
+        condition: motorCondition,
+        serviceHistory: true,
+        financeAvailable: true,
+        tradeInAvailable: true,
+        bodyType: 'SUV',
+      };
+    } else if (pillar === 'jobs' || pillar === 'opportunities') {
+      newListing.jobDetails = {
+        company,
+        jobType,
+        salaryRange,
+        requirements: ['Relevant experience required'],
+        benefits: ['Competitive compensation'],
+        remote,
+      };
+    }
+
+    if (newListing.marketplaceDetails) {
+      newListing.marketplaceDetails.allowPlatformCheckout = allowPlatformCheckout;
     }
 
     onListingCreated(newListing);
@@ -235,6 +288,10 @@ export const PostListingWizard: React.FC<PostListingWizardProps> = ({
                     { id: 'business', label: 'Business Directory', icon: Building2, desc: 'Companies & Brands' },
                     { id: 'service', label: 'Services & Trades', icon: Wrench, desc: 'Tradespeople & Pros' },
                     { id: 'property', label: 'Property Portal', icon: Home, desc: 'Real Estate & Land' },
+                    { id: 'motors', label: 'Motors', icon: Car, desc: 'Cars, Trucks & Parts' },
+                    { id: 'jobs', label: 'Jobs', icon: JobIcon, desc: 'Hiring & Career' },
+                    { id: 'opportunities', label: 'Opportunities', icon: Globe, desc: 'Tenders & Bids' },
+                    { id: 'business_services', label: 'B2B Services', icon: Briefcase, desc: 'Corporate Solutions' },
                   ].map((p) => {
                     const Icon = p.icon;
                     const isSelected = pillar === p.id;
@@ -306,6 +363,23 @@ export const PostListingWizard: React.FC<PostListingWizardProps> = ({
                   required
                 />
               </div>
+
+              {/* AI Suggestion Box */}
+              {title.length > 5 && (
+                <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-start gap-3 animate-in fade-in zoom-in-95">
+                  <Sparkles className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-[10px] font-black text-indigo-700 uppercase tracking-widest mb-0.5">AI Section Suggestion</div>
+                    <div className="text-xs text-indigo-900">
+                      Based on your title, we recommend the <strong className="underline decoration-indigo-300">
+                        {title.toLowerCase().includes('house') || title.toLowerCase().includes('apartment') ? 'Property Portal' : 
+                         title.toLowerCase().includes('plumber') || title.toLowerCase().includes('electrician') ? 'Services & Trades' :
+                         title.toLowerCase().includes('toyota') || title.toLowerCase().includes('car') ? 'Motors' : 'Marketplace'}
+                      </strong> section.
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -539,6 +613,79 @@ export const PostListingWizard: React.FC<PostListingWizardProps> = ({
                 </div>
               )}
 
+              {/* Motor Fields */}
+              {pillar === 'motors' && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Make</label>
+                    <input type="text" value={make} onChange={(e) => setMake(e.target.value)} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl" placeholder="e.g. Toyota" />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Model</label>
+                    <input type="text" value={motorModel} onChange={(e) => setMotorModel(e.target.value)} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl" placeholder="e.g. Hilux" />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Year</label>
+                    <input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl" />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Mileage (km)</label>
+                    <input type="number" value={mileage} onChange={(e) => setMileage(Number(e.target.value))} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl" />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Fuel</label>
+                    <select value={fuel} onChange={(e) => setFuel(e.target.value as any)} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                      <option>Petrol</option>
+                      <option>Diesel</option>
+                      <option>Electric</option>
+                      <option>Hybrid</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Transmission</label>
+                    <select value={transmission} onChange={(e) => setTransmission(e.target.value as any)} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                      <option>Automatic</option>
+                      <option>Manual</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Condition</label>
+                    <select value={motorCondition} onChange={(e) => setMotorCondition(e.target.value as any)} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                      <option>New</option>
+                      <option>Used</option>
+                      <option>Classic</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Job Fields */}
+              {(pillar === 'jobs' || pillar === 'opportunities') && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Company / Organization</label>
+                    <input type="text" value={company} onChange={(e) => setCompany(e.target.value)} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl" />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Job Type</label>
+                    <select value={jobType} onChange={(e) => setJobType(e.target.value as any)} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                      <option>Full-time</option>
+                      <option>Part-time</option>
+                      <option>Contract</option>
+                      <option>Freelance</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Salary Range / Budget</label>
+                    <input type="text" value={salaryRange} onChange={(e) => setSalaryRange(e.target.value)} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl" placeholder="e.g. R 20k - R 30k" />
+                  </div>
+                  <div className="flex items-center gap-2 pt-6">
+                    <input type="checkbox" checked={remote} onChange={(e) => setRemote(e.target.checked)} className="rounded text-amber-600" />
+                    <label className="font-semibold text-slate-700">Remote Work Allowed</label>
+                  </div>
+                </div>
+              )}
+
               {/* Business Fields */}
               {pillar === 'business' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -639,8 +786,36 @@ export const PostListingWizard: React.FC<PostListingWizardProps> = ({
                   />
                   <span className="text-xs text-slate-500 font-semibold uppercase">{currentCountry.currencyCode}</span>
                 </div>
-                <div className="text-[11px] text-slate-500 mt-1">
-                  Buyers in other countries will automatically see this converted to their local currency.
+              </div>
+
+              {/* Hybrid Transaction Choice */}
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                  Transaction Method & Alerts
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setAllowPlatformCheckout(false)}
+                    className={`p-3 rounded-xl border text-left transition-all ${!allowPlatformCheckout ? 'border-amber-600 bg-white shadow-sm ring-1 ring-amber-600' : 'border-slate-200 bg-slate-100'}`}
+                  >
+                    <div className="font-bold text-xs">Direct Transaction</div>
+                    <div className="text-[10px] text-slate-500">Contact directly. 0% Commission.</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAllowPlatformCheckout(true)}
+                    className={`p-3 rounded-xl border text-left transition-all ${allowPlatformCheckout ? 'border-amber-600 bg-white shadow-sm ring-1 ring-amber-600' : 'border-slate-200 bg-slate-100'}`}
+                  >
+                    <div className="font-bold text-xs">Platform Checkout</div>
+                    <div className="text-[10px] text-slate-500">Secure pay through Hub. Commission applies.</div>
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 pt-2">
+                  <input type="checkbox" id="price_drop" className="rounded text-amber-600" defaultChecked />
+                  <label htmlFor="price_drop" className="text-[10px] font-bold text-slate-600">
+                    Enable "Price Drop" alerts for users who save this listing
+                  </label>
                 </div>
               </div>
 

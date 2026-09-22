@@ -12,7 +12,8 @@ import {
   Check, 
   ArrowRight,
   RefreshCw,
-  SlidersHorizontal
+  SlidersHorizontal,
+  MapPin
 } from 'lucide-react';
 import { Country, Listing, PillarType } from '../types';
 
@@ -35,7 +36,9 @@ export const AISearchModal: React.FC<AISearchModalProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [modelChoice, setModelChoice] = useState<'gemini-3.5-flash' | 'gemini-3.1-pro-preview' | 'gemini-3.1-flash-lite'>('gemini-3.5-flash');
   const [thinkingEnabled, setThinkingEnabled] = useState(false);
-  const [groundingEnabled, setGroundingEnabled] = useState(false);
+  const [groundingEnabled, setGroundingEnabled] = useState(true);
+  const [useGoogleSearch, setUseGoogleSearch] = useState(true);
+  const [useGoogleMaps, setUseGoogleMaps] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [ttsPlaying, setTtsPlaying] = useState(false);
 
@@ -104,6 +107,8 @@ export const AISearchModal: React.FC<AISearchModalProps> = ({
           modelChoice,
           thinking: thinkingEnabled,
           grounding: groundingEnabled,
+          useGoogleSearch: useGoogleSearch && groundingEnabled,
+          useGoogleMaps: useGoogleMaps && groundingEnabled,
           listings,
         }),
       });
@@ -217,9 +222,27 @@ export const AISearchModal: React.FC<AISearchModalProps> = ({
                 onChange={(e) => setGroundingEnabled(e.target.checked)}
                 className="rounded text-amber-600"
               />
-              <Globe className="w-3.5 h-3.5 text-sky-600" />
-              <span>Search Grounding</span>
+              <span className="font-semibold">AI Grounding:</span>
             </label>
+
+            {groundingEnabled && (
+              <div className="flex items-center gap-2 border-l border-slate-300 pl-2">
+                <button
+                  onClick={() => { setUseGoogleSearch(true); setUseGoogleMaps(false); }}
+                  className={`px-2 py-0.5 rounded flex items-center gap-1 transition-colors ${useGoogleSearch ? 'bg-sky-100 text-sky-800 border border-sky-200' : 'text-slate-500'}`}
+                >
+                  <Globe className="w-3 h-3" />
+                  <span>Google Search</span>
+                </button>
+                <button
+                  onClick={() => { setUseGoogleSearch(false); setUseGoogleMaps(true); }}
+                  className={`px-2 py-0.5 rounded flex items-center gap-1 transition-colors ${useGoogleMaps ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'text-slate-500'}`}
+                >
+                  <MapPin className="w-3 h-3" />
+                  <span>Google Maps</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

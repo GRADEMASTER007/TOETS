@@ -19,7 +19,7 @@ interface BoostModalProps {
   listing: Listing | null;
   boostPlans: BoostPlan[];
   currentCountry: Country;
-  onActivateBoost: (listingId: string, planId: 'free' | 'week' | 'month' | 'three_months', newTransaction: Transaction) => void;
+  onActivateBoost: (listingId: string, planId: 'free' | 'bump' | 'week' | 'month' | 'three_months', newTransaction: Transaction) => void;
 }
 
 export const BoostModal: React.FC<BoostModalProps> = ({
@@ -30,7 +30,7 @@ export const BoostModal: React.FC<BoostModalProps> = ({
   currentCountry,
   onActivateBoost,
 }) => {
-  const [selectedPlanId, setSelectedPlanId] = useState<'free' | 'week' | 'month' | 'three_months'>('month');
+  const [selectedPlanId, setSelectedPlanId] = useState<'free' | 'bump' | 'week' | 'month' | 'three_months'>('month');
   
   // Default gateway based on currency: PayFast/Yoco for ZAR, PayPal for USD/AED/others
   const initialGateway: PaymentGateway = currentCountry.currencyCode === 'ZAR' ? 'payfast' : 'paypal';
@@ -73,21 +73,26 @@ export const BoostModal: React.FC<BoostModalProps> = ({
           amount: planPrice,
           currency: currentCountry.currencyCode,
           countryCode: currentCountry.isoCode,
+          buyerEmail: listing.vendor.email || 'waterkefirsa@gmail.com',
+          buyerName: listing.vendor.name || 'Vendor',
         }),
       });
 
       const data = await response.json();
+      const confirmedRef = data?.checkout?.reference || reference;
+      const confirmedInv = data?.checkout?.invoiceNumber || invoiceNumber;
 
       // Trigger Webhook simulation
       await fetch(`/api/payments/webhook?gateway=${selectedGateway}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          invoiceNumber,
-          reference,
+          invoiceNumber: confirmedInv,
+          reference: confirmedRef,
           status: 'PAID',
           listingId: listing.id,
           planId: selectedPlan.id,
+          gateway: selectedGateway,
         }),
       });
 
@@ -103,8 +108,8 @@ export const BoostModal: React.FC<BoostModalProps> = ({
         planTitle: selectedPlan.title,
         status: 'completed',
         date: new Date().toISOString().replace('T', ' ').substring(0, 16),
-        invoiceNumber,
-        reference,
+        invoiceNumber: confirmedInv,
+        reference: confirmedRef,
       };
 
       setCompletedTransaction(tx);
@@ -245,6 +250,11 @@ Thank you for promoting your business with Market Place Hub!
                         {plan.id === 'three_months' && (
                           <span className="absolute -top-2.5 right-3 bg-purple-600 text-white font-extrabold text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider">
                             Best Value
+                          </span>
+                        )}
+                        {plan.isQuickBump && (
+                          <span className="absolute -top-2.5 right-3 bg-sky-600 text-white font-extrabold text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            Instant Results
                           </span>
                         )}
                         <div>

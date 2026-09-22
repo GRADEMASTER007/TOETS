@@ -16,10 +16,16 @@ import {
   deleteDoc, 
   addDoc,
   serverTimestamp,
-  getDocFromServer
+  getDocFromServer,
+  getDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  updateDoc
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
-import { Listing, Review } from '../types';
+import { Listing, Review, UserProfile, Order, UserRole } from '../types';
 
 // Initialize Firebase App singleton
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -29,8 +35,9 @@ export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 // Initialize Firestore targeting the provisioned database ID
-export const db = firebaseConfig.firestoreDatabaseId
-  ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
+const config = firebaseConfig as any;
+export const db = config.firestoreDatabaseId
+  ? getFirestore(app, config.firestoreDatabaseId)
   : getFirestore(app);
 
 // Error Handling Infrastructure (per Firebase Integration Skill)
@@ -94,7 +101,7 @@ export async function testConnection() {
 testConnection();
 
 // Authentication Helpers
-export async function signInWithGoogle(): Promise<User> {
+export async function signInWithGoogle(): Promise<UserProfile> {
   const result = await signInWithPopup(auth, googleProvider);
   const user = result.user;
   
@@ -102,18 +109,36 @@ export async function signInWithGoogle(): Promise<User> {
   const pathForUser = `users/${user.uid}`;
   try {
     const userRef = doc(db, 'users', user.uid);
-    await setDoc(userRef, {
+    const userDoc = await getDoc(userRef);
+    
+    let role: UserRole = 'buyer';
+    // Set super admin based on user email
+    if (user.email === 'healthyfieldsbus2@gmail.com') {
+      role = 'admin';
+    } else if (userDoc.exists()) {
+      role = userDoc.data().role || 'buyer';
+    }
+
+    const profile: Partial<UserProfile> = {
       uid: user.uid,
       displayName: user.displayName || 'Market Place Hub User',
-      email: user.email,
-      photoURL: user.photoURL,
-      lastLogin: serverTimestamp(),
-    }, { merge: true });
+      email: user.email || '',
+      photoURL: user.photoURL || undefined,
+      role: role,
+      lastLogin: new Date().toISOString(),
+    };
+
+    if (!userDoc.exists()) {
+      profile.memberSince = new Date().toISOString();
+      profile.commissionRate = 0.05; // 5% default
+    }
+
+    await setDoc(userRef, profile, { merge: true });
+    return { ...userDoc.data(), ...profile } as UserProfile;
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, pathForUser);
+    throw err;
   }
-
-  return user;
 }
 
 export async function logOut(): Promise<void> {
@@ -122,6 +147,18 @@ export async function logOut(): Promise<void> {
 
 export function onAuthUserChanged(callback: (user: User | null) => void) {
   return onAuthStateChanged(auth, callback);
+}
+
+export async function getUserProfile(uid: string): Promise<UserProfile | null> {
+  const path = `users/${uid}`;
+  try {
+    const userRef = doc(db, 'users', uid);
+    const userDoc = await getDoc(userRef);
+    return userDoc.exists() ? (userDoc.data() as UserProfile) : null;
+  } catch (err) {
+    handleFirestoreError(err, OperationType.GET, path);
+    return null;
+  }
 }
 
 // ----------------------------------------------------------------------
@@ -172,15 +209,73 @@ export async function saveListingToFirestore(listing: Listing): Promise<void> {
   }
 }
 
-export async function fetchFirestoreListings(): Promise<Listing[]> {
+export async function fetchFirestoreListings(filters?: { vendorId?: string }): Promise<Listing[]> {
   const pathForListings = 'listings';
   try {
-    const listingsRef = collection(db, 'listings');
-    const snapshot = await getDocs(listingsRef);
+    let listingsRef = collection(db, 'listings');
+    let q = query(listingsRef);
+    
+    if (filters?.vendorId) {
+      q = query(listingsRef, where('vendor.id', '==', filters.vendorId));
+    }
+    
+    const snapshot = await getDocs(q);
     return snapshot.docs.map((d) => d.data() as Listing);
   } catch (err) {
     handleFirestoreError(err, OperationType.GET, pathForListings);
     return [];
+  }
+}
+
+// ----------------------------------------------------------------------
+// Firestore Database Operations: Orders & Transactions
+// ----------------------------------------------------------------------
+export async function createOrder(order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  const path = 'orders';
+  try {
+    const ordersRef = collection(db, 'orders');
+    const docRef = await addDoc(ordersRef, {
+      ...order,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    return docRef.id;
+  } catch (err) {
+    handleFirestoreError(err, OperationType.CREATE, path);
+    throw err;
+  }
+}
+
+export async function fetchOrders(filters?: { buyerId?: string, sellerId?: string }): Promise<Order[]> {
+  const path = 'orders';
+  try {
+    const ordersRef = collection(db, 'orders');
+    let q = query(ordersRef, orderBy('createdAt', 'desc'));
+    
+    if (filters?.buyerId) {
+      q = query(ordersRef, where('buyerId', '==', filters.buyerId), orderBy('createdAt', 'desc'));
+    } else if (filters?.sellerId) {
+      q = query(ordersRef, where('sellerId', '==', filters.sellerId), orderBy('createdAt', 'desc'));
+    }
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Order));
+  } catch (err) {
+    handleFirestoreError(err, OperationType.GET, path);
+    return [];
+  }
+}
+
+export async function updateOrderStatus(orderId: string, status: Order['status']): Promise<void> {
+  const path = `orders/${orderId}`;
+  try {
+    const orderRef = doc(db, 'orders', orderId);
+    await updateDoc(orderRef, {
+      status,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    handleFirestoreError(err, OperationType.UPDATE, path);
   }
 }
 

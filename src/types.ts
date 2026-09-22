@@ -1,4 +1,76 @@
-export type PillarType = 'marketplace' | 'business' | 'service' | 'property';
+export type UserRole = 'buyer' | 'seller' | 'admin';
+
+export interface UserProfile {
+  uid: string;
+  displayName: string;
+  email: string;
+  photoURL?: string;
+  role: UserRole;
+  phoneNumber?: string;
+  sellerRating?: number;
+  commissionRate?: number; // e.g. 0.05 for 5%
+  lastLogin: string;
+  memberSince: string;
+}
+
+export interface Order {
+  id: string;
+  listingId: string;
+  listingTitle: string;
+  listingImage: string;
+  buyerId: string;
+  buyerName: string;
+  sellerId: string;
+  sellerName: string;
+  amount: number;
+  currency: string;
+  commissionAmount: number;
+  sellerEarnings: number;
+  status: 'pending' | 'paid' | 'shipped' | 'delivered' | 'completed' | 'cancelled' | 'refunded';
+  paymentType: 'platform' | 'private';
+  paymentMethod?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MarketplaceStats {
+  totalSales: number;
+  totalCommission: number;
+  totalOrders: number;
+  totalUsers: number;
+  totalListings: number;
+  salesByDay: { date: string; amount: number }[];
+}
+
+export type PillarType = 'marketplace' | 'business' | 'service' | 'property' | 'motors' | 'jobs' | 'opportunities' | 'business_services' | 'advertising';
+
+export interface MotorDetails {
+  make: string;
+  model: string;
+  year: number;
+  mileage: number;
+  fuel: 'Petrol' | 'Diesel' | 'Electric' | 'Hybrid' | 'Gas';
+  transmission: 'Automatic' | 'Manual';
+  bodyType: string;
+  engineSize?: string;
+  condition: 'New' | 'Used' | 'Classic';
+  vin?: string;
+  registrationNumber?: string;
+  serviceHistory: boolean;
+  dealerId?: string;
+  financeAvailable: boolean;
+  tradeInAvailable: boolean;
+}
+
+export interface JobDetails {
+  company: string;
+  jobType: 'Full-time' | 'Part-time' | 'Contract' | 'Freelance' | 'Internship';
+  salaryRange?: string;
+  requirements: string[];
+  benefits: string[];
+  applicationUrl?: string;
+  remote: boolean;
+}
 
 export interface Country {
   id: string;
@@ -13,6 +85,7 @@ export interface Country {
   active: boolean;
   exchangeRateToUSD: number; // 1 USD = X Local Currency
   exchangeRateToZAR: number; // 1 ZAR = X Local Currency
+  taxRate?: number; // e.g. 0.15 for 15%
 }
 
 export interface Category {
@@ -21,6 +94,7 @@ export interface Category {
   pillar: PillarType;
   iconName: string;
   subcategories: string[];
+  active?: boolean;
 }
 
 export interface ListingVendor {
@@ -63,7 +137,7 @@ export interface Listing {
   currencyCode: string;
   description: string;
   images: string[];
-  featuredTier: 'free' | 'week' | 'month' | 'three_months';
+  featuredTier: 'free' | 'bump' | 'week' | 'month' | 'three_months';
   featuredExpiry?: string;
   featuredDaysLeft?: number;
   verifiedVendor: boolean;
@@ -92,6 +166,7 @@ export interface Listing {
     negotiable: boolean;
     warranty: boolean;
     brand?: string;
+    allowPlatformCheckout?: boolean;
   };
   serviceDetails?: {
     experienceYears: number;
@@ -107,11 +182,22 @@ export interface Listing {
     foundedYear?: number;
     employeeCount?: string;
     branches?: string[];
+    industry?: string;
   };
+  motorDetails?: MotorDetails;
+  jobDetails?: JobDetails;
+  priceHistory?: PriceHistoryPoint[];
+}
+
+export interface PriceHistoryPoint {
+  date: string; // ISO string e.g. "2026-06-15"
+  price: number;
+  note?: string; // e.g. "Initial Listing", "Price Reduced (-8%)"
+  event?: 'initial' | 'drop' | 'increase' | 'promo';
 }
 
 export interface BoostPlan {
-  id: 'free' | 'week' | 'month' | 'three_months';
+  id: 'free' | 'bump' | 'week' | 'month' | 'three_months';
   title: string;
   durationDays: number;
   priceUSD: number;
@@ -121,6 +207,7 @@ export interface BoostPlan {
   badgeColor: string;
   benefits: string[];
   priorityScore: number;
+  isQuickBump?: boolean;
 }
 
 export type PaymentGateway = 'paypal' | 'payfast' | 'yoco';
@@ -177,7 +264,7 @@ export interface MessageThread {
 export interface AISearchState {
   isSearching: boolean;
   query: string;
-  model: 'gemini-3.5-flash' | 'gemini-3.1-pro-preview' | 'gemini-3.1-flash-lite';
+  model: 'gemini-3.8-flash' | 'gemini-3.1-pro-preview' | 'gemini-3.1-flash-lite';
   thinkingEnabled: boolean;
   searchGrounding: boolean;
   results: {
@@ -211,6 +298,13 @@ export interface SavedSearchAlert {
   matchCount: number;
   createdAt: string;
   lastNotifiedAt?: string;
+  // Specific Price Drop Tracking fields
+  alertType?: 'search' | 'price_drop';
+  listingId?: string;
+  initialPrice?: number;
+  targetPrice?: number;
+  listingSlug?: string;
+  listingImage?: string;
 }
 
 export interface NotificationPreferences {
@@ -233,3 +327,81 @@ export interface ReferralProfile {
   currency: string;
 }
 
+export interface Lead {
+  id: string;
+  listingId: string;
+  sellerId: string;
+  buyerId?: string;
+  buyerName: string;
+  buyerEmail: string;
+  buyerPhone: string;
+  message: string;
+  status: 'new' | 'contacted' | 'qualified' | 'won' | 'lost';
+  type: 'quote' | 'viewing' | 'callback' | 'finance' | 'general';
+  createdAt: string;
+}
+
+export interface CommissionRule {
+  id: string;
+  countryId?: string;
+  pillar: PillarType | 'all';
+  categoryId?: string;
+  categoryName?: string;
+  sellerType?: 'individual' | 'business' | 'all';
+  ruleType?: 'percentage' | 'fixed' | 'hybrid';
+  percentage?: number; // 0.08 for 8%
+  fixedFee?: number;
+  minFee?: number;
+  maxFee?: number;
+  isActive?: boolean;
+  active?: boolean; // legacy support
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  pillar: PillarType | 'all';
+  priceMonthly: number;
+  currency: string;
+  listingLimit: number;
+  features: string[];
+  reducedCommission?: number;
+}
+
+export interface LedgerEntry {
+  id: string;
+  transactionId?: string;
+  relatedId?: string;
+  userId?: string;
+  type: 'sale' | 'payout' | 'refund' | 'boost' | 'subscription' | 'ad_revenue' | 'boost_sale' | 'commission';
+  amount?: number;
+  credit?: number;
+  debit?: number;
+  balance?: number;
+  currency?: string;
+  commission?: number;
+  tax?: number;
+  netAmount?: number;
+  description?: string;
+  status?: 'pending' | 'completed' | 'failed';
+  createdAt: string;
+}
+
+export interface AdCampaign {
+  id: string;
+  advertiserId: string;
+  name: string;
+  type: 'banner' | 'sponsored_listing' | 'sponsored_business';
+  placement: 'homepage' | 'category' | 'search';
+  targetCountry?: string;
+  targetPillar?: PillarType;
+  budget: number;
+  spent: number;
+  startDate: string;
+  endDate: string;
+  impressions: number;
+  clicks: number;
+  status: 'active' | 'paused' | 'completed' | 'draft';
+  imageUrl?: string;
+  linkUrl: string;
+}

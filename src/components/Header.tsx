@@ -26,7 +26,12 @@ import {
   LogIn,
   LogOut,
   UserCheck,
-  Gift
+  Gift,
+  Car,
+  Briefcase,
+  Zap,
+  MapPin,
+  Megaphone
 } from 'lucide-react';
 import { Country, PillarType } from '../types';
 
@@ -115,11 +120,16 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   const pillars = [
-    { id: 'all', label: 'All Categories', icon: Layers },
+    { id: 'all', label: 'All', icon: Layers },
     { id: 'marketplace', label: 'Marketplace', icon: ShoppingBag },
     { id: 'business', label: 'Business Directory', icon: Building2 },
     { id: 'service', label: 'Services & Trades', icon: Wrench },
     { id: 'property', label: 'Property Portal', icon: Home },
+    { id: 'motors', label: 'Motors', icon: Car },
+    { id: 'jobs', label: 'Jobs', icon: Briefcase },
+    { id: 'business_services', label: 'Business Services', icon: ShieldCheck },
+    { id: 'advertising', label: 'Promote', icon: Megaphone },
+    { id: 'directory', label: 'Locations', icon: MapPin },
   ];
 
   return (

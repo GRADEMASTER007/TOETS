@@ -30,6 +30,9 @@ import {
   AdminDashboard 
 } from './components/AdminDashboard';
 import { 
+  AdBanner 
+} from './components/AdBanner';
+import { 
   DeliverablesExplorerModal 
 } from './components/DeliverablesExplorerModal';
 import { 
@@ -60,15 +63,13 @@ import {
   ReferralProgramModal 
 } from './components/ReferralProgramModal';
 import { 
-  signInWithGoogle, 
-  logOut, 
-  onAuthUserChanged,
   fetchUserFavoritesFromFirestore,
   toggleFavoriteInFirestore,
   saveListingToFirestore,
-  fetchFirestoreListings
+  fetchFirestoreListings,
+  fetchOrders
 } from './lib/firebase';
-import type { User } from 'firebase/auth';
+import { useAuth } from './lib/AuthContext';
 
 import { 
   COUNTRIES as allAfricanCountries, 
@@ -76,9 +77,12 @@ import {
   INITIAL_LISTINGS as initialListings, 
   BOOST_PLANS as initialBoostPlans, 
   INITIAL_TRANSACTIONS as initialTransactions, 
-  INITIAL_REVIEWS as initialReviews 
+  INITIAL_REVIEWS as initialReviews,
+  INITIAL_LEDGER as initialLedger,
+  INITIAL_COMMISSION_RULES as initialCommissionRules,
+  INITIAL_AD_CAMPAIGNS as initialAds
 } from './data/initialData';
-import { Category, Country, Listing, PillarType, Transaction, Review, SavedSearchAlert } from './types';
+import { Category, Country, Listing, PillarType, Transaction, Review, SavedSearchAlert, Order, LedgerEntry, CommissionRule, AdCampaign, BoostPlan } from './types';
 import { 
   Filter, 
   SlidersHorizontal, 
@@ -92,7 +96,29 @@ import {
   Building2,
   Wrench,
   Home,
-  Check
+  Check,
+  ArrowRight,
+  CarFront,
+  Smartphone,
+  Shirt,
+  Tractor,
+  Hammer,
+  Dumbbell,
+  Utensils,
+  Bed,
+  CreditCard,
+  Truck,
+  HeartPulse,
+  Briefcase,
+  Laptop,
+  User,
+  Key,
+  Building,
+  Star,
+  ShieldCheck,
+  LayoutGrid,
+  LayoutDashboard,
+  Sun
 } from 'lucide-react';
 
 // Intelligent Subdomain & GEO Country Resolution
@@ -170,6 +196,7 @@ function resolveInitialCountry(countryList: Country[]): Country {
 }
 
 export function App() {
+  const { profile, signIn, signOut } = useAuth();
   // 1. Regional Country State (Persisted in localStorage & Subdomain/GEO detected)
   const [countries, setCountries] = useState<Country[]>(() => {
     return allAfricanCountries;
@@ -190,6 +217,24 @@ export function App() {
   const [boostPlans] = useState(initialBoostPlans);
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [ledger, setLedger] = useState<LedgerEntry[]>(initialLedger);
+  const [commissionRules, setCommissionRules] = useState<CommissionRule[]>(initialCommissionRules);
+  const [ads, setAds] = useState<AdCampaign[]>(initialAds);
+
+  // Load real data from Firestore
+  useEffect(() => {
+    const loadData = async () => {
+      const firestoreListings = await fetchFirestoreListings();
+      if (firestoreListings.length > 0) {
+        setListings(firestoreListings);
+      }
+      
+      const firestoreOrders = await fetchOrders();
+      setOrders(firestoreOrders);
+    };
+    loadData();
+  }, []);
 
   // 3. Navigation & Filters
   const [activePillar, setActivePillar] = useState<PillarType | 'all'>('all');
@@ -198,13 +243,27 @@ export function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedCity, setSelectedCity] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'boost' | 'price_asc' | 'price_desc' | 'date'>('boost');
+  const [minPrice, setMinPrice] = useState<number | ''>('');
+  const [maxPrice, setMaxPrice] = useState<number | ''>('');
   const [aiFilteredIds, setAiFilteredIds] = useState<string[] | null>(null);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
 
   // Dynamic SEO & Canonical synchronization
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    const pillarName = activePillar !== 'all' ? `${activePillar.charAt(0).toUpperCase() + activePillar.slice(1)} | ` : '';
+    const pillarLabels: Record<string, string> = {
+      all: 'All',
+      marketplace: 'Marketplace',
+      business: 'Business Directory',
+      service: 'Services & Trades',
+      property: 'Property Portal',
+      motors: 'Motors',
+      jobs: 'Jobs',
+      business_services: 'Business Services',
+      advertising: 'Promote',
+      directory: 'Locations'
+    };
+    const pillarName = activePillar !== 'all' ? `${pillarLabels[activePillar] || activePillar} | ` : '';
     document.title = `${pillarName}Market Place Hub – ${currentCountry.name} (${currentCountry.subdomain}.marketplacehub.company)`;
 
     // Update canonical link
@@ -229,26 +288,22 @@ export function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Firebase Auth State
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-
   useEffect(() => {
-    const unsubscribe = onAuthUserChanged(async (user) => {
-      setCurrentUser(user);
-      if (user) {
-        // Sync user favorites from Cloud Firestore
+    if (profile) {
+      // Sync user favorites from Cloud Firestore
+      const loadFavs = async () => {
         try {
-          const cloudFavorites = await fetchUserFavoritesFromFirestore(user.uid);
+          const cloudFavorites = await fetchUserFavoritesFromFirestore(profile.uid);
           if (cloudFavorites && cloudFavorites.length > 0) {
             setSavedIds((prev) => Array.from(new Set([...prev, ...cloudFavorites])));
           }
         } catch (err) {
           console.warn('Failed to fetch user favorites from Firestore:', err);
         }
-      }
-    });
-    return () => unsubscribe();
-  }, []);
+      };
+      loadFavs();
+    }
+  }, [profile]);
 
   useEffect(() => {
     localStorage.setItem('mph_saved_ids', JSON.stringify(savedIds));
@@ -261,9 +316,9 @@ export function App() {
       isSaved ? prev.filter((id) => id !== listingId) : [...prev, listingId]
     );
 
-    if (currentUser) {
+    if (profile) {
       try {
-        await toggleFavoriteInFirestore(currentUser.uid, listingId, !isSaved);
+        await toggleFavoriteInFirestore(profile.uid, listingId, !isSaved);
       } catch (err) {
         console.warn('Failed to update favorite in Firestore:', err);
       }
@@ -275,19 +330,11 @@ export function App() {
   };
 
   const handleGoogleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (err: any) {
-      console.warn('Google Sign-In notice:', err.message);
-    }
+    await signIn();
   };
 
   const handleSignOut = async () => {
-    try {
-      await logOut();
-    } catch (err: any) {
-      console.warn('Sign out notice:', err.message);
-    }
+    await signOut();
   };
 
   // 5. Modals State
@@ -486,25 +533,41 @@ export function App() {
   };
 
   // Handler when listing boost is purchased & confirmed
-  const handleActivateBoost = (
+  const handleActivateBoost = async (
     listingId: string,
-    planId: 'free' | 'week' | 'month' | 'three_months',
+    planId: 'free' | 'bump' | 'week' | 'month' | 'three_months',
     newTx: Transaction
   ) => {
+    let updatedListing: Listing | undefined;
     setListings((prev) =>
       prev.map((l) => {
         if (l.id === listingId) {
-          const durationDays = planId === 'three_months' ? 90 : planId === 'month' ? 30 : planId === 'week' ? 7 : 0;
-          return {
+          const durationDays = 
+            planId === 'three_months' ? 90 : 
+            planId === 'month' ? 30 : 
+            planId === 'week' ? 7 : 
+            planId === 'bump' ? 1 : 0;
+          const u: Listing = {
             ...l,
             featuredTier: planId,
             featuredDaysLeft: durationDays,
           };
+          updatedListing = u;
+          return u;
         }
         return l;
       })
     );
     setTransactions((prev) => [newTx, ...prev]);
+
+    // Persist boost to Firestore
+    if (updatedListing) {
+      try {
+        await saveListingToFirestore(updatedListing);
+      } catch (err) {
+        console.warn('Failed to sync boost to Firestore:', err);
+      }
+    }
 
     // Update active modal if open
     if (selectedListingDetail && selectedListingDetail.id === listingId) {
@@ -538,6 +601,112 @@ export function App() {
     setListings((prev) => prev.filter((l) => l.id !== id));
   };
 
+  const handleCheckout = async (listing: Listing) => {
+    if (!profile) {
+      alert('Please sign in to complete your purchase.');
+      return;
+    }
+
+    // Determine commission rule based on pillar
+    const rule = commissionRules.find((r) => r.pillar === listing.pillar) || 
+                 commissionRules.find((r) => r.pillar === 'marketplace') || 
+                 { ruleType: 'percentage', percentage: 0.15 };
+    
+    let commission = 0;
+    if (rule.ruleType === 'percentage') {
+      commission = listing.price * (rule.percentage || 0.15);
+    } else if (rule.ruleType === 'fixed') {
+      commission = rule.fixedFee || 0;
+    }
+
+    const orderId = `ORD-${Date.now()}`;
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${currentCountry.isoCode}-SALE-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const newOrder: Order = {
+      id: orderId,
+      listingId: listing.id,
+      listingTitle: listing.title,
+      listingImage: listing.images[0] || '',
+      buyerId: profile.uid,
+      buyerName: profile.displayName,
+      sellerId: listing.vendor.id,
+      sellerName: listing.vendor.name,
+      amount: listing.price,
+      currency: listing.currencyCode,
+      commissionAmount: commission,
+      sellerEarnings: listing.price - commission,
+      status: 'pending',
+      paymentType: 'platform',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    setOrders((prev) => [newOrder, ...prev]);
+
+    // Simulate Payment Transaction
+    const newTx: Transaction = {
+      id: `tx-${Date.now()}`,
+      listingId: listing.id,
+      listingTitle: listing.title,
+      vendorId: listing.vendor.id,
+      gateway: currentCountry.currencyCode === 'ZAR' ? 'payfast' : 'paypal',
+      amount: listing.price,
+      currency: listing.currencyCode,
+      status: 'completed',
+      date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      invoiceNumber,
+      reference: `${currentCountry.currencyCode}_ORD_${Date.now()}`,
+      planId: 'sale',
+      planTitle: 'Marketplace Purchase',
+    };
+    setTransactions((prev) => [newTx, ...prev]);
+
+    // Update Master Ledger
+    const lastBalance = ledger.length > 0 ? ledger[0].balance || 0 : 0;
+    const newLedgerEntry: LedgerEntry = {
+      id: `led-${Date.now()}`,
+      type: 'commission',
+      relatedId: orderId,
+      credit: commission,
+      debit: 0,
+      balance: lastBalance + commission,
+      description: `Commission (${listing.pillar}) from sale: ${listing.title}`,
+      createdAt: new Date().toISOString(),
+    };
+    setLedger((prev) => [newLedgerEntry, ...prev]);
+
+    alert(`Order ${orderId} placed successfully! The vendor has been notified.`);
+    setSelectedListingDetail(null);
+  };
+
+  // Admin Action Handlers
+  const handleAddCategory = (newCat: Partial<Category>) => {
+    const category: Category = {
+      id: `cat-${Date.now()}`,
+      name: newCat.name || 'New Category',
+      pillar: newCat.pillar || 'marketplace',
+      subcategories: newCat.subcategories || [],
+      iconName: 'LayoutGrid',
+    };
+    setCategories((prev) => [...prev, category]);
+  };
+
+  const handleUpdateCategory = (id: string, updates: Partial<Category>) => {
+    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
+  };
+
+  const handleUpdateBoostPlan = (id: string, updates: Partial<BoostPlan>) => {
+    console.log('Update boost plan:', id, updates);
+  };
+
+  const handleUpdateCommissionRule = (id: string, updates: Partial<CommissionRule>) => {
+    setCommissionRules((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
+  };
+
+  const handleUpdateAdCampaign = (id: string, updates: Partial<AdCampaign>) => {
+    setAds((prev) => prev.map((a) => (a.id === id ? { ...a, ...updates } : a)));
+  };
+
   // Country manager toggle
   const handleToggleCountry = (id: string) => {
     setCountries((prev) =>
@@ -568,6 +737,10 @@ export function App() {
       if (selectedCity !== 'all' && l.city !== selectedCity) {
         return false;
       }
+
+      // Filter by Price Range
+      if (minPrice !== '' && l.price < minPrice) return false;
+      if (maxPrice !== '' && l.price > maxPrice) return false;
 
       // Text query match
       if (searchQuery.trim()) {
@@ -641,7 +814,7 @@ export function App() {
         onOpenAISearch={() => setAiSearchModalOpen(true)}
         onOpenChatbot={() => setGeminiChatModalOpen(true)}
         onOpenLiveVoice={() => setLiveVoiceModalOpen(true)}
-        currentUser={currentUser}
+        currentUser={profile}
         onSignIn={handleGoogleSignIn}
         onSignOut={handleSignOut}
         onOpenPostListing={() => setPostListingModalOpen(true)}
@@ -675,6 +848,8 @@ export function App() {
               onVoiceSearch={handleVoiceSearch}
               isTranscribing={isTranscribing}
             />
+
+            <AdBanner ads={ads} currentCountryCode={currentCountry.isoCode} />
 
             {/* AI Search Filter Banner if active */}
             {aiSummary && (
@@ -730,6 +905,84 @@ export function App() {
                         isSaved={savedIds.includes(item.id)}
                         onToggleSave={toggleSaveListing}
                       />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Enhanced Category Discovery Grid */}
+            {!searchQuery && !aiFilteredIds && (
+              <div className="max-w-7xl mx-auto px-4 sm:px-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-amber-100 text-amber-700">
+                      <Layers className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-slate-900">Browse Top Categories</h2>
+                      <p className="text-xs text-slate-500">Explore premium listings by industry and sector</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setActivePillar('all')}
+                    className="text-xs font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1"
+                  >
+                    <span>View All</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  {categories.slice(0, 12).map((cat) => {
+                    // Simple logic to pick an icon from lucide based on iconName
+                    const IconComponent = 
+                      cat.iconName === 'Car' ? CarFront :
+                      cat.iconName === 'Smartphone' ? Smartphone :
+                      cat.iconName === 'Home' ? Home :
+                      cat.iconName === 'Shirt' ? Shirt :
+                      cat.iconName === 'Tractor' ? Tractor :
+                      cat.iconName === 'Hammer' ? Hammer :
+                      cat.iconName === 'Dumbbell' ? Dumbbell :
+                      cat.iconName === 'ShoppingBag' ? ShoppingBag :
+                      cat.iconName === 'Utensils' ? Utensils :
+                      cat.iconName === 'Hotel' ? Bed :
+                      cat.iconName === 'CreditCard' ? CreditCard :
+                      cat.iconName === 'Truck' ? Truck :
+                      cat.iconName === 'HeartPulse' ? HeartPulse :
+                      cat.iconName === 'Briefcase' ? Briefcase :
+                      cat.iconName === 'Wrench' ? Wrench :
+                      cat.iconName === 'Zap' ? Zap :
+                      cat.iconName === 'Sun' ? Sun :
+                      cat.iconName === 'Building2' ? Building2 :
+                      cat.iconName === 'ShieldCheck' ? ShieldCheck :
+                      cat.iconName === 'Laptop' ? Laptop :
+                      cat.iconName === 'User' ? User :
+                      cat.iconName === 'Key' ? Key :
+                      cat.iconName === 'Building' ? Building :
+                      cat.iconName === 'MapPin' ? MapPin :
+                      cat.iconName === 'Megaphone' ? Megaphone :
+                      cat.iconName === 'Star' ? Star : LayoutGrid;
+
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => {
+                          setActivePillar(cat.pillar);
+                          setSelectedCategory(cat.id);
+                        }}
+                        className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-amber-400 hover:shadow-md transition-all group text-center"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-500 group-hover:bg-amber-50 group-hover:text-amber-600 flex items-center justify-center mx-auto mb-2.5 transition-colors">
+                          <IconComponent className="w-5 h-5" />
+                        </div>
+                        <div className="text-[11px] font-bold text-slate-800 line-clamp-1 group-hover:text-amber-700">
+                          {cat.name}
+                        </div>
+                        <div className="text-[9px] text-slate-400 mt-0.5 uppercase tracking-wider font-semibold">
+                          {cat.pillar}
+                        </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -797,6 +1050,43 @@ export function App() {
                     </select>
                   </div>
 
+                  {/* Price Range Filter */}
+                  <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
+                    <span className="text-slate-400">Price:</span>
+                    <div className="flex items-center gap-1.5">
+                      <div className="relative">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">{currentCountry.currencySymbol}</span>
+                        <input
+                          type="number"
+                          placeholder="Min"
+                          value={minPrice}
+                          onChange={(e) => setMinPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                          className="w-16 sm:w-20 bg-white border border-slate-200 rounded-lg pl-5 pr-1 py-0.5 font-bold text-slate-800 placeholder:font-normal placeholder:text-slate-300 focus:outline-none focus:border-amber-400 text-[11px]"
+                        />
+                      </div>
+                      <span className="text-slate-300">—</span>
+                      <div className="relative">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">{currentCountry.currencySymbol}</span>
+                        <input
+                          type="number"
+                          placeholder="Max"
+                          value={maxPrice}
+                          onChange={(e) => setMaxPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                          className="w-16 sm:w-20 bg-white border border-slate-200 rounded-lg pl-5 pr-1 py-0.5 font-bold text-slate-800 placeholder:font-normal placeholder:text-slate-300 focus:outline-none focus:border-amber-400 text-[11px]"
+                        />
+                      </div>
+                    </div>
+                    {(minPrice !== '' || maxPrice !== '') && (
+                      <button 
+                        onClick={() => { setMinPrice(''); setMaxPrice(''); }}
+                        className="ml-1 p-0.5 hover:bg-slate-200 rounded-md transition-colors"
+                        title="Clear Price Filter"
+                      >
+                        <X className="w-3 h-3 text-slate-400" />
+                      </button>
+                    )}
+                  </div>
+
                   {/* Sorting Dropdown */}
                   <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5">
                     <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
@@ -849,6 +1139,8 @@ export function App() {
                       setSearchQuery('');
                       setSelectedCategory('all');
                       setSelectedCity('all');
+                      setMinPrice('');
+                      setMaxPrice('');
                       setAiFilteredIds(null);
                     }}
                     className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl"
@@ -865,8 +1157,9 @@ export function App() {
         {currentView === 'vendor' && (
           <VendorDashboard
             currentCountry={currentCountry}
-            listings={listings}
-            transactions={transactions}
+            listings={listings.filter(l => l.vendor.id === profile?.uid)}
+            transactions={transactions.filter(t => t.vendorId === profile?.uid)}
+            orders={orders.filter(o => o.sellerId === profile?.uid)}
             onOpenPostListing={() => setPostListingModalOpen(true)}
             onOpenBoostModal={(l) => setSelectedBoostListing(l)}
             onDeleteListing={(id) => setListings((prev) => prev.filter((item) => item.id !== id))}
@@ -874,16 +1167,25 @@ export function App() {
         )}
 
         {/* Admin CMS View */}
-        {currentView === 'admin' && (
+        {currentView === 'admin' && profile?.role === 'admin' && (
           <AdminDashboard
             countries={countries}
             onToggleCountry={handleToggleCountry}
             categories={categories}
+            onAddCategory={handleAddCategory}
+            onUpdateCategory={handleUpdateCategory}
             boostPlans={boostPlans}
+            onUpdateBoostPlan={handleUpdateBoostPlan}
             listings={listings}
             onApproveListing={handleApproveListing}
             onRejectListing={handleRejectListing}
             transactions={transactions}
+            orders={orders}
+            ledger={ledger}
+            commissionRules={commissionRules}
+            onUpdateCommissionRule={handleUpdateCommissionRule}
+            ads={ads}
+            onUpdateAdCampaign={handleUpdateAdCampaign}
           />
         )}
 
@@ -943,6 +1245,11 @@ export function App() {
           onSendMessage={(listing, message) => {
             console.log('Inquiry message sent:', listing.id, message);
           }}
+          onCheckout={handleCheckout}
+          savedSearches={savedSearches}
+          onAddSavedSearch={handleAddSavedSearch}
+          onDeleteSavedSearch={handleDeleteSavedSearch}
+          profile={profile}
         />
       )}
 
@@ -995,7 +1302,7 @@ export function App() {
         boostPlans={boostPlans}
         onListingCreated={async (newListing) => {
           setListings((prev) => [newListing, ...prev]);
-          if (currentUser) {
+          if (profile) {
             try {
               await saveListingToFirestore(newListing);
             } catch (err) {
@@ -1023,7 +1330,7 @@ export function App() {
       <UserSettingsModal
         isOpen={userSettingsModalOpen}
         onClose={() => setUserSettingsModalOpen(false)}
-        currentUser={currentUser}
+        currentUser={profile}
         currentCountry={currentCountry}
         countries={countries}
         savedSearches={savedSearches}
@@ -1039,7 +1346,7 @@ export function App() {
         isOpen={referralModalOpen}
         onClose={() => setReferralModalOpen(false)}
         currentCountry={currentCountry}
-        currentUser={currentUser}
+        currentUser={profile}
         onOpenBoostModal={() => {
           setReferralModalOpen(false);
           if (listings.length > 0) {

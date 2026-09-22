@@ -1,143 +1,169 @@
 {
-  "entities": {
-    "UserProfile": {
-      "title": "UserProfile",
-      "description": "User profile document storing public identity and authentication metadata",
-      "type": "object",
-      "properties": {
-        "uid": { "type": "string", "maxLength": 128 },
-        "displayName": { "type": "string", "maxLength": 100 },
-        "email": { "type": "string", "format": "email", "maxLength": 120 },
-        "photoURL": { "type": "string", "maxLength": 1000 },
-        "lastLogin": { "type": "string" }
-      },
-      "required": ["uid"]
+  "collections": [
+    {
+      "name": "users",
+      "fields": {
+        "uid": "string",
+        "displayName": "string",
+        "email": "string",
+        "photoURL": "string?",
+        "role": "string",
+        "countryCode": "string",
+        "phoneNumber": "string?",
+        "whatsapp": "string?",
+        "verified": "boolean",
+        "kycStatus": "string",
+        "memberSince": "timestamp",
+        "lastLogin": "timestamp",
+        "subscriptionPlanId": "string?",
+        "subscriptionExpiry": "timestamp?",
+        "walletBalance": "number"
+      }
     },
-    "Favorite": {
-      "title": "Favorite",
-      "description": "User saved listing reference",
-      "type": "object",
-      "properties": {
-        "listingId": { "type": "string", "maxLength": 128 },
-        "createdAt": { "type": "string" }
-      },
-      "required": ["listingId"]
+    {
+      "name": "listings",
+      "fields": {
+        "title": "string",
+        "slug": "string",
+        "pillar": "string",
+        "countryCode": "string",
+        "city": "string",
+        "regionArea": "string",
+        "region": "string?",
+        "address": "string",
+        "coordinates": "object",
+        "categoryId": "string",
+        "categoryName": "string",
+        "subcategory": "string",
+        "price": "number",
+        "currencyCode": "string",
+        "description": "string",
+        "images": "array",
+        "featuredTier": "string",
+        "featuredExpiry": "timestamp?",
+        "verifiedVendor": "boolean",
+        "vendor": "object",
+        "datePosted": "timestamp",
+        "status": "string",
+        "views": "number",
+        "saves": "number",
+        "leadsCount": "number",
+        "propertyDetails": "object?",
+        "marketplaceDetails": "object?",
+        "serviceDetails": "object?",
+        "motorDetails": "object?",
+        "jobDetails": "object?"
+      }
     },
-    "Listing": {
-      "title": "Listing",
-      "description": "Public listing across Marketplace, Business Directory, Service Directory, or Property Portal",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string", "maxLength": 128 },
-        "title": { "type": "string", "minLength": 3, "maxLength": 200 },
-        "description": { "type": "string", "maxLength": 5000 },
-        "pillar": { "type": "string", "enum": ["marketplace", "business", "service", "property"] },
-        "countryCode": { "type": "string", "maxLength": 4 },
-        "city": { "type": "string", "maxLength": 100 },
-        "price": { "type": "number" },
-        "currencyCode": { "type": "string", "maxLength": 6 },
-        "vendorId": { "type": "string", "maxLength": 128 },
-        "vendorName": { "type": "string", "maxLength": 120 },
-        "categoryName": { "type": "string", "maxLength": 100 },
-        "subcategory": { "type": "string", "maxLength": 100 },
-        "featuredTier": { "type": "string", "enum": ["none", "free", "basic", "month", "three_months"] },
-        "images": { "type": "array" },
-        "verified": { "type": "boolean" },
-        "createdAt": { "type": "string" },
-        "updatedAt": { "type": "string" }
-      },
-      "required": ["id", "title", "pillar", "countryCode", "vendorId"]
+    {
+      "name": "categories",
+      "fields": {
+        "name": "string",
+        "pillar": "string",
+        "iconName": "string",
+        "subcategories": "array",
+        "active": "boolean"
+      }
     },
-    "Lead": {
-      "title": "Lead",
-      "description": "Customer inquiry or trade lead sent to a vendor",
-      "type": "object",
-      "properties": {
-        "listingId": { "type": "string", "maxLength": 128 },
-        "vendorId": { "type": "string", "maxLength": 128 },
-        "senderName": { "type": "string", "maxLength": 100 },
-        "senderPhone": { "type": "string", "maxLength": 40 },
-        "senderEmail": { "type": "string", "format": "email", "maxLength": 120 },
-        "message": { "type": "string", "maxLength": 2000 },
-        "status": { "type": "string", "enum": ["pending", "contacted", "closed"] },
-        "createdAt": { "type": "string" }
-      },
-      "required": ["listingId", "senderName", "message"]
+    {
+      "name": "countries",
+      "fields": {
+        "name": "string",
+        "isoCode": "string",
+        "subdomain": "string",
+        "currencyCode": "string",
+        "currencySymbol": "string",
+        "flag": "string",
+        "region": "string",
+        "active": "boolean",
+        "taxRate": "number?",
+        "exchangeRateToUSD": "number?"
+      }
     },
-    "Review": {
-      "title": "Review",
-      "description": "Customer review and rating on a vendor or listing",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string", "maxLength": 128 },
-        "listingId": { "type": "string", "maxLength": 128 },
-        "authorName": { "type": "string", "maxLength": 100 },
-        "authorId": { "type": "string", "maxLength": 128 },
-        "rating": { "type": "number" },
-        "comment": { "type": "string", "maxLength": 1000 },
-        "verifiedPurchase": { "type": "boolean" },
-        "createdAt": { "type": "string" }
-      },
-      "required": ["id", "listingId", "authorName", "rating", "comment"]
+    {
+      "name": "orders",
+      "fields": {
+        "listingId": "string",
+        "listingTitle": "string",
+        "listingImage": "string",
+        "buyerId": "string",
+        "buyerName": "string",
+        "sellerId": "string",
+        "sellerName": "string",
+        "amount": "number",
+        "currency": "string",
+        "commissionAmount": "number",
+        "sellerEarnings": "number",
+        "status": "string",
+        "paymentType": "string",
+        "paymentMethod": "string?",
+        "createdAt": "timestamp",
+        "updatedAt": "timestamp"
+      }
     },
-    "KYCSubmission": {
-      "title": "KYCSubmission",
-      "description": "Vendor business registration and KYC compliance verification documents",
-      "type": "object",
-      "properties": {
-        "userId": { "type": "string", "maxLength": 128 },
-        "businessName": { "type": "string", "maxLength": 150 },
-        "registrationNumber": { "type": "string", "maxLength": 100 },
-        "documentType": { "type": "string", "maxLength": 50 },
-        "documentName": { "type": "string", "maxLength": 200 },
-        "countryCode": { "type": "string", "maxLength": 4 },
-        "status": { "type": "string", "enum": ["pending", "verified", "rejected"] },
-        "submittedAt": { "type": "string" }
-      },
-      "required": ["userId", "businessName", "registrationNumber"]
+    {
+      "name": "leads",
+      "fields": {
+        "listingId": "string",
+        "listingTitle": "string",
+        "sellerId": "string",
+        "buyerId": "string?",
+        "buyerName": "string",
+        "buyerEmail": "string",
+        "buyerPhone": "string",
+        "message": "string",
+        "status": "string",
+        "type": "string",
+        "createdAt": "timestamp"
+      }
     },
-    "ChatSession": {
-      "title": "ChatSession",
-      "description": "Saved AI assistant conversation thread history",
-      "type": "object",
-      "properties": {
-        "userId": { "type": "string", "maxLength": 128 },
-        "role": { "type": "string", "maxLength": 50 },
-        "model": { "type": "string", "maxLength": 50 },
-        "messages": { "type": "array" },
-        "updatedAt": { "type": "string" }
-      },
-      "required": ["userId", "role", "model"]
+    {
+      "name": "ledger",
+      "fields": {
+        "transactionId": "string",
+        "userId": "string",
+        "type": "string",
+        "amount": "number",
+        "currency": "string",
+        "commission": "number",
+        "tax": "number",
+        "netAmount": "number",
+        "status": "string",
+        "createdAt": "timestamp",
+        "description": "string?"
+      }
+    },
+    {
+      "name": "adCampaigns",
+      "fields": {
+        "advertiserId": "string",
+        "name": "string",
+        "type": "string",
+        "placement": "string",
+        "targetCountry": "string?",
+        "targetPillar": "string?",
+        "budget": "number",
+        "spent": "number",
+        "startDate": "timestamp",
+        "endDate": "timestamp",
+        "impressions": "number",
+        "clicks": "number",
+        "status": "string",
+        "imageUrl": "string?",
+        "linkUrl": "string"
+      }
+    },
+    {
+      "name": "subscriptionPlans",
+      "fields": {
+        "name": "string",
+        "pillar": "string",
+        "priceMonthly": "number",
+        "currency": "string",
+        "listingLimit": "number",
+        "features": "array",
+        "reducedCommission": "number?"
+      }
     }
-  },
-  "firestore": {
-    "/users/{userId}": {
-      "schema": "UserProfile",
-      "description": "User profile document storing public identity and settings"
-    },
-    "/users/{userId}/favorites/{favId}": {
-      "schema": "Favorite",
-      "description": "Subcollection of saved favorites for a specific user"
-    },
-    "/listings/{listingId}": {
-      "schema": "Listing",
-      "description": "Public listings across the 4 marketplace pillars and 55 country subdomains"
-    },
-    "/leads/{leadId}": {
-      "schema": "Lead",
-      "description": "Customer inquiry records submitted to vendors"
-    },
-    "/reviews/{reviewId}": {
-      "schema": "Review",
-      "description": "User reviews and star ratings for listings and vendors"
-    },
-    "/kyc/{kycId}": {
-      "schema": "KYCSubmission",
-      "description": "Vendor KYC and legal compliance verification records"
-    },
-    "/chats/{chatId}": {
-      "schema": "ChatSession",
-      "description": "AI conversation thread logs and role history per user"
-    }
-  }
+  ]
 }

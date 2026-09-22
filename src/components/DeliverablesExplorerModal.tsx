@@ -482,14 +482,18 @@ CREATE INDEX idx_listings_geom ON listings USING GIST(location_geom);
 `;
 
 const gatewayCodeSnippet = `
-// Production Gateway Handler for PayFast, Yoco, and PayPal
+// Production Gateway Handlers for PayFast & PayPal (ALL-FIREBASE)
 import crypto from 'crypto';
 
-// 1. PAYFAST (South Africa ZAR)
-export function generatePayFastSignature(data: Record<string, string>, passPhrase: string) {
+// 1. PAYFAST (South Africa ZAR Instant EFT & Cards)
+// Merchant ID: 11071120 | Merchant Key: p6fi9ewdjk1js | Passphrase: abCd15ab92g1233bc1223
+export function generatePayFastSignature(
+  data: Record<string, string>,
+  passPhrase: string = process.env.PAYFAST_PASSPHRASE || 'abCd15ab92g1233bc1223'
+) {
   let pfOutput = '';
   for (let key in data) {
-    if (data.hasOwnProperty(key) && String(data[key]).trim() !== '') {
+    if (data.hasOwnProperty(key) && String(data[key]).trim() !== '' && key !== 'signature') {
       pfOutput += \`\${key}=\${encodeURIComponent(String(data[key]).trim()).replace(/%20/g, '+')}&\`;
     }
   }
@@ -500,25 +504,14 @@ export function generatePayFastSignature(data: Record<string, string>, passPhras
   return crypto.createHash('md5').update(getString).digest('hex');
 }
 
-// 2. YOCO (South Africa Cards / In-App)
-export async function createYocoCharge(secretKey: string, token: string, amountInCents: number) {
-  const response = await fetch('https://online.yoco.com/v1/charges/', {
-    method: 'POST',
-    headers: {
-      'X-Auth-Secret-Key': secretKey,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      token,
-      amountInCents,
-      currency: 'ZAR',
-    }),
-  });
-  return await response.json();
-}
-
-// 3. PAYPAL (Global & UAE AED / USD)
-export async function createPayPalOrder(clientId: string, clientSecret: string, amount: number, currency: string) {
+// 2. PAYPAL (Global, USD, AED, Diaspora - App: ALL-FIREBASE)
+// Client ID: BAAk0DorZSaDyTQbbltBVp4mGPBPrPkVrHSdMGy4BBXgB8jhpzZdlEY9PZ24lsfPZGD6Ki6NPyGqjyGePc
+export async function createPayPalOrder(
+  clientId: string = process.env.PAYPAL_CLIENT_ID || 'BAAk0DorZSaDyTQbbltBVp4mGPBPrPkVrHSdMGy4BBXgB8jhpzZdlEY9PZ24lsfPZGD6Ki6NPyGqjyGePc',
+  clientSecret: string = process.env.PAYPAL_CLIENT_SECRET || 'EKfkUyx3qKyhX3VcZvxHZeGl1TJH0pIORvr2hBMzplRkzwC2B_-JU_fYbZkKDMlxWQRMcFwi2kEYhXpu',
+  amount: number,
+  currency: string = 'USD'
+) {
   const auth = Buffer.from(\`\${clientId}:\${clientSecret}\`).toString('base64');
   const tokenRes = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
     method: 'POST',

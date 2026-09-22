@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Star, ShieldCheck, Heart, MessageCircle, Sparkles, Bed, Bath, Maximize2, Tag } from 'lucide-react';
+import { MapPin, Star, ShieldCheck, Heart, MessageCircle, Sparkles, Bed, Bath, Maximize2, Tag, Gauge, Calendar, Zap, Briefcase } from 'lucide-react';
 import { Country, Listing } from '../types';
 import { formatPrice, convertPrice } from '../utils/currency';
 
@@ -165,6 +165,35 @@ export const ListingCard: React.FC<ListingCardProps> = ({
               <span className="font-medium">Condition: {listing.marketplaceDetails.condition}</span>
               {listing.marketplaceDetails.negotiable && (
                 <span className="text-amber-800 bg-amber-50 px-2 py-0.5 rounded text-[11px]">Negotiable</span>
+              )}
+            </div>
+          )}
+
+          {listing.pillar === 'motors' && listing.motorDetails && (
+            <div className="flex items-center gap-3 text-xs text-slate-600 py-1.5 border-y border-slate-100 my-2">
+              <div className="flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                <span>{listing.motorDetails.year}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Gauge className="w-3.5 h-3.5 text-slate-400" />
+                <span>{listing.motorDetails.mileage.toLocaleString()} km</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Tag className="w-3.5 h-3.5 text-slate-400" />
+                <span>{listing.motorDetails.transmission}</span>
+              </div>
+            </div>
+          )}
+
+          {(listing.pillar === 'jobs' || listing.pillar === 'opportunities') && listing.jobDetails && (
+            <div className="flex items-center justify-between text-xs text-slate-600 py-1.5 border-y border-slate-100 my-2">
+              <div className="flex items-center gap-1">
+                <Briefcase className="w-3.5 h-3.5 text-slate-400" />
+                <span>{listing.jobDetails.jobType}</span>
+              </div>
+              {listing.jobDetails.remote && (
+                <span className="text-sky-700 font-semibold bg-sky-50 px-2 py-0.5 rounded text-[10px]">Remote</span>
               )}
             </div>
           )}

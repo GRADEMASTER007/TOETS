@@ -17,7 +17,9 @@ import {
   Globe,
   Tag,
   Building,
-  DollarSign
+  DollarSign,
+  TrendingDown,
+  BellRing
 } from 'lucide-react';
 import { Country, PillarType, SavedSearchAlert, NotificationPreferences } from '../types';
 
@@ -308,29 +310,67 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                     return (
                       <div
                         key={alert.id}
-                        className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                        className={`p-4 bg-white rounded-2xl border shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all ${
+                          alert.alertType === 'price_drop'
+                            ? 'border-amber-300 bg-gradient-to-r from-amber-50/40 via-white to-white'
+                            : 'border-slate-200'
+                        }`}
                       >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-slate-900 text-sm">{alert.name}</span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold uppercase">
-                              {alert.pillar}
-                            </span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold flex items-center gap-1">
-                              <span>{country.flag}</span>
-                              <span>{country.name}</span>
-                            </span>
-                          </div>
-                          <div className="text-xs text-slate-500 flex items-center gap-3">
-                            <span>Query: <strong className="text-slate-700">{alert.query}</strong></span>
-                            <span>•</span>
-                            <span>Frequency: <strong className="text-slate-700 capitalize">{alert.frequency}</strong></span>
-                            <span>•</span>
-                            <span>Matches: <strong className="text-emerald-600">{alert.matchCount} listings</strong></span>
+                        <div className="flex items-start gap-3">
+                          {alert.listingImage && (
+                            <img
+                              src={alert.listingImage}
+                              alt={alert.name}
+                              className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0 hidden sm:block"
+                            />
+                          )}
+
+                          <div className="space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-bold text-slate-900 text-sm">{alert.name}</span>
+                              {alert.alertType === 'price_drop' ? (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500 text-white font-bold flex items-center gap-1 uppercase tracking-wider">
+                                  <TrendingDown className="w-3 h-3" />
+                                  <span>Price Drop Alert</span>
+                                </span>
+                              ) : (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold uppercase">
+                                  {alert.pillar}
+                                </span>
+                              )}
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold flex items-center gap-1">
+                                <span>{country.flag}</span>
+                                <span>{country.name}</span>
+                              </span>
+                            </div>
+
+                            <div className="text-xs text-slate-500 flex flex-wrap items-center gap-x-3 gap-y-1">
+                              {alert.alertType === 'price_drop' ? (
+                                <>
+                                  <span>
+                                    Initial Price: <strong className="text-slate-700">{country.currencyCode} {alert.initialPrice?.toLocaleString()}</strong>
+                                  </span>
+                                  <span>•</span>
+                                  <span>
+                                    Target Trigger: <strong className="text-emerald-700">{alert.targetPrice ? `≤ ${country.currencyCode} ${alert.targetPrice.toLocaleString()}` : 'Any Reduction'}</strong>
+                                  </span>
+                                  <span>•</span>
+                                  <span>Frequency: <strong className="text-slate-700 capitalize">{alert.frequency}</strong></span>
+                                </>
+                              ) : (
+                                <>
+                                  <span>Query: <strong className="text-slate-700">{alert.query}</strong></span>
+                                  <span>•</span>
+                                  <span>Frequency: <strong className="text-slate-700 capitalize">{alert.frequency}</strong></span>
+                                  <span>•</span>
+                                  <span>Matches: <strong className="text-emerald-600">{alert.matchCount} listings</strong></span>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 self-end sm:self-center">
+                        <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                           <button
                             onClick={() => onToggleSavedSearchEmail(alert.id, !alert.emailEnabled)}
                             className={`p-2 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${

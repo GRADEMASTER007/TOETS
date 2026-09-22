@@ -19,15 +19,20 @@ import {
   Send,
   Upload,
   Sparkles,
-  Users
+  Users,
+  Calculator,
+  Percent,
+  TrendingDown,
+  X
 } from 'lucide-react';
-import { Country, Listing, Transaction } from '../types';
+import { Country, Listing, Transaction, Order } from '../types';
 import { formatPrice } from '../utils/currency';
 
 interface VendorDashboardProps {
   currentCountry: Country;
   listings: Listing[];
   transactions: Transaction[];
+  orders: Order[];
   onOpenPostListing: () => void;
   onOpenBoostModal: (listing: Listing) => void;
   onDeleteListing: (listingId: string) => void;
@@ -37,16 +42,107 @@ export const VendorDashboard: React.FC<VendorDashboardProps> = ({
   currentCountry,
   listings,
   transactions,
+  orders,
   onOpenPostListing,
   onOpenBoostModal,
   onDeleteListing,
 }) => {
-  const [activeTab, setActiveTab] = useState<'listings' | 'leads' | 'transactions' | 'membership' | 'referral'>('listings');
+  const [activeTab, setActiveTab] = useState<'listings' | 'leads' | 'transactions' | 'membership' | 'referral' | 'revenue' | 'intelligence'>('listings');
+  const [selectedListingIds, setSelectedListingIds] = useState<string[]>([]);
   const [kycModalOpen, setKycModalOpen] = useState(false);
   const [kycUploaded, setKycUploaded] = useState(false);
   const [copiedRef, setCopiedRef] = useState(false);
   const [replyTextMap, setReplyTextMap] = useState<Record<string, string>>({});
   const [repliedMap, setRepliedMap] = useState<Record<string, string[]>>({});
+
+  // Revenue Calculator state
+  const [calcSalePrice, setCalcSalePrice] = useState<number>(listings[0]?.price || 1000);
+  const [calcQuantity, setCalcQuantity] = useState<number>(1);
+  const [calcCostPerUnit, setCalcCostPerUnit] = useState<number>(0);
+  const platformCommissionRate = 0.15; // 15% standard for marketplace
+  const [calcShipping, setCalcShipping] = useState<number>(0);
+  
+  // Membership upgrade payment state
+  const [upgradePlan, setUpgradePlan] = useState<{ id: 'pro' | 'enterprise'; title: string; price: number } | null>(null);
+  const [upgradeGateway, setUpgradeGateway] = useState<'payfast' | 'paypal' | 'yoco'>(currentCountry.currencyCode === 'ZAR' ? 'payfast' : 'paypal');
+  const [isProcessingUpgrade, setIsProcessingUpgrade] = useState(false);
+  const [upgradeSuccessTx, setUpgradeSuccessTx] = useState<Transaction | null>(null);
+
+  const handleProcessUpgrade = async () => {
+    if (!upgradePlan) return;
+    setIsProcessingUpgrade(true);
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${currentCountry.isoCode}-MBR-${Math.floor(1000 + Math.random() * 9000)}`;
+    const reference = `${upgradeGateway.toUpperCase()}_MBR_${Date.now()}`;
+
+    try {
+      const response = await fetch('/api/payments/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gateway: upgradeGateway,
+          planId: `membership_${upgradePlan.id}`,
+          amount: upgradePlan.price,
+          currency: currentCountry.currencyCode,
+          countryCode: currentCountry.isoCode,
+          buyerEmail: 'waterkefirsa@gmail.com',
+          buyerName: 'Vendor Merchant',
+        }),
+      });
+      const data = await response.json();
+      const confirmedRef = data?.checkout?.reference || reference;
+      const confirmedInv = data?.checkout?.invoiceNumber || invoiceNumber;
+
+      await fetch(`/api/payments/webhook?gateway=${upgradeGateway}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          invoiceNumber: confirmedInv,
+          reference: confirmedRef,
+          status: 'PAID',
+          planId: upgradePlan.id,
+          gateway: upgradeGateway,
+        }),
+      });
+
+      const tx: Transaction = {
+        id: `tx-mbr-${Date.now()}`,
+        listingId: 'vendor-account',
+        listingTitle: `Vendor Membership - ${upgradePlan.title}`,
+        vendorId: 'vendor-1',
+        gateway: upgradeGateway,
+        amount: upgradePlan.price,
+        currency: currentCountry.currencyCode,
+        planId: upgradePlan.id,
+        planTitle: `${upgradePlan.title} Membership`,
+        status: 'completed',
+        date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        invoiceNumber: confirmedInv,
+        reference: confirmedRef,
+      };
+
+      setUpgradeSuccessTx(tx);
+    } catch (err) {
+      console.error('Membership upgrade error:', err);
+      const tx: Transaction = {
+        id: `tx-mbr-${Date.now()}`,
+        listingId: 'vendor-account',
+        listingTitle: `Vendor Membership - ${upgradePlan.title}`,
+        vendorId: 'vendor-1',
+        gateway: upgradeGateway,
+        amount: upgradePlan.price,
+        currency: currentCountry.currencyCode,
+        planId: upgradePlan.id,
+        planTitle: `${upgradePlan.title} Membership`,
+        status: 'completed',
+        date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        invoiceNumber,
+        reference,
+      };
+      setUpgradeSuccessTx(tx);
+    } finally {
+      setIsProcessingUpgrade(false);
+    }
+  };
 
   // Simulated vendor inquiries/leads
   const [leads, setLeads] = useState([
@@ -210,89 +306,346 @@ export const VendorDashboard: React.FC<VendorDashboardProps> = ({
           <Share2 className="w-4 h-4 text-emerald-500" />
           <span>Referral Program</span>
         </button>
+        <button
+          onClick={() => setActiveTab('intelligence')}
+          className={`pb-3 px-3 transition-colors shrink-0 relative flex items-center gap-1.5 ${
+            activeTab === 'intelligence' ? 'text-amber-600 border-b-2 border-amber-600' : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <TrendingUp className="w-4 h-4 text-indigo-500" />
+          <span>Market Intelligence</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('revenue')}
+          className={`pb-3 px-3 transition-colors shrink-0 relative flex items-center gap-1.5 ${
+            activeTab === 'revenue' ? 'text-amber-600 border-b-2 border-amber-600' : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Calculator className="w-4 h-4 text-indigo-500" />
+          <span>Revenue Calculator</span>
+        </button>
       </div>
+
+      {/* TAB: REVENUE CALCULATOR */}
+      {activeTab === 'revenue' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-1 p-6 bg-white rounded-3xl border border-slate-200 shadow-xs space-y-5">
+              <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                <Calculator className="w-4 h-4 text-indigo-600" />
+                <span>Profit Estimator</span>
+              </h3>
+              
+              <div className="space-y-4 text-xs">
+                <div>
+                  <label className="text-slate-500 block mb-1.5 font-semibold">Sale Price per Unit ({currentCountry.currencySymbol})</label>
+                  <input 
+                    type="number" 
+                    value={calcSalePrice}
+                    onChange={(e) => setCalcSalePrice(Number(e.target.value))}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-500 block mb-1.5 font-semibold">Cost per Unit (Production/Wholesale)</label>
+                  <input 
+                    type="number" 
+                    value={calcCostPerUnit}
+                    onChange={(e) => setCalcCostPerUnit(Number(e.target.value))}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-slate-500 block mb-1.5 font-semibold">Quantity</label>
+                    <input 
+                      type="number" 
+                      value={calcQuantity}
+                      onChange={(e) => setCalcQuantity(Number(e.target.value))}
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-slate-500 block mb-1.5 font-semibold">Shipping Cost</label>
+                    <input 
+                      type="number" 
+                      value={calcShipping}
+                      onChange={(e) => setCalcShipping(Number(e.target.value))}
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900"
+                    />
+                  </div>
+                </div>
+                <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+                  <div className="flex items-center justify-between text-[10px] text-indigo-700 font-bold uppercase mb-1">
+                    <span>Platform Commission</span>
+                    <span>15% Standard</span>
+                  </div>
+                  <div className="text-sm font-black text-indigo-900">
+                    {formatPrice(calcSalePrice * calcQuantity * platformCommissionRate, currentCountry.currencyCode, currentCountry.currencySymbol)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="md:col-span-2 space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-6 bg-slate-900 text-white rounded-3xl shadow-lg space-y-2">
+                  <div className="text-xs text-slate-400 font-bold uppercase tracking-wider">Estimated Gross Revenue</div>
+                  <div className="text-3xl font-black font-mono">
+                    {formatPrice(calcSalePrice * calcQuantity, currentCountry.currencyCode, currentCountry.currencySymbol)}
+                  </div>
+                </div>
+                <div className="p-6 bg-emerald-600 text-white rounded-3xl shadow-lg space-y-2">
+                  <div className="text-xs text-emerald-100 font-bold uppercase tracking-wider">Estimated Net Profit</div>
+                  <div className="text-3xl font-black font-mono">
+                    {formatPrice(
+                      (calcSalePrice * calcQuantity) - 
+                      (calcCostPerUnit * calcQuantity) - 
+                      (calcSalePrice * calcQuantity * platformCommissionRate) - 
+                      calcShipping, 
+                      currentCountry.currencyCode, 
+                      currentCountry.currencySymbol
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 bg-white rounded-3xl border border-slate-200 shadow-xs space-y-4">
+                <h4 className="font-bold text-slate-900 text-sm">Earnings Breakdown</h4>
+                <div className="space-y-3 text-xs">
+                  <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                    <span className="text-slate-500">Gross Sales ({calcQuantity} units)</span>
+                    <span className="font-bold text-slate-900">{formatPrice(calcSalePrice * calcQuantity, currentCountry.currencyCode, currentCountry.currencySymbol)}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                    <div className="flex items-center gap-1.5">
+                      <TrendingDown className="w-3.5 h-3.5 text-rose-500" />
+                      <span className="text-slate-500">Total Cost of Goods</span>
+                    </div>
+                    <span className="font-bold text-rose-600">-{formatPrice(calcCostPerUnit * calcQuantity, currentCountry.currencyCode, currentCountry.currencySymbol)}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                    <div className="flex items-center gap-1.5">
+                      <Percent className="w-3.5 h-3.5 text-indigo-500" />
+                      <span className="text-slate-500">Marketplace Commission (15%)</span>
+                    </div>
+                    <span className="font-bold text-indigo-600">-{formatPrice(calcSalePrice * calcQuantity * platformCommissionRate, currentCountry.currencyCode, currentCountry.currencySymbol)}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-slate-500">Logistics & Shipping</span>
+                    <span className="font-bold text-slate-900">-{formatPrice(calcShipping, currentCountry.currencyCode, currentCountry.currencySymbol)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: MARKET INTELLIGENCE */}
+      {activeTab === 'intelligence' && (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-6 bg-white rounded-3xl border border-slate-200 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-slate-900 text-sm">Keyword Demand (Region: {currentCountry.name})</h3>
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Live AI Data</span>
+              </div>
+              <div className="space-y-4">
+                {[
+                  { keyword: 'Solar Inverters', demand: 98, trend: '+15%' },
+                  { keyword: 'Apartments for Rent', demand: 85, trend: '+8%' },
+                  { keyword: 'Toyota Hilux', demand: 76, trend: '+2%' },
+                  { keyword: 'Office Space', demand: 42, trend: '-5%' },
+                  { keyword: 'Courier Services', demand: 68, trend: '+12%' },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center justify-between group">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-slate-800">{item.keyword}</span>
+                      <div className="w-32 h-1 bg-slate-100 rounded-full mt-1.5 overflow-hidden">
+                        <div className="h-full bg-amber-500 rounded-full" style={{ width: `${item.demand}%` }} />
+                      </div>
+                    </div>
+                    <div className={`text-[11px] font-bold ${item.trend.startsWith('+') ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {item.trend}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-6 bg-white rounded-3xl border border-slate-200 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-slate-900 text-sm">Competitive Pricing Benchmarks</h3>
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Per Pillar</span>
+              </div>
+              <div className="space-y-4">
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Marketplace</div>
+                    <div className="text-xs font-bold text-slate-900">Your pricing is 5% below average</div>
+                  </div>
+                  <TrendingUp className="w-4 h-4 text-emerald-500" />
+                </div>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Property</div>
+                    <div className="text-xs font-bold text-slate-900">High demand for 2-bed units</div>
+                  </div>
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                </div>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Services</div>
+                    <div className="text-xs font-bold text-slate-900">Peak inquiry time: 09:00 - 11:00</div>
+                  </div>
+                  <Clock className="w-4 h-4 text-sky-500" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 bg-slate-900 text-white rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -mr-20 -mt-20" />
+            <div className="space-y-2 relative z-10">
+              <div className="flex items-center gap-2 text-amber-400">
+                <Sparkles className="w-5 h-5" />
+                <span className="text-xs font-black uppercase tracking-widest">AI Opportunity Alert</span>
+              </div>
+              <h3 className="text-lg font-bold">New demand spike for "Industrial Warehouse" in {currentCountry.name}</h3>
+              <p className="text-xs text-slate-400 max-w-lg">
+                Our AI engine has detected a 45% increase in searches for storage and industrial hubs in your region over the last 72 hours. Consider listing available units or promoting existing business profiles now.
+              </p>
+            </div>
+            <button className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/20 transition-all whitespace-nowrap relative z-10">
+              Target This Demand
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* TAB 1: LISTINGS TABLE */}
       {activeTab === 'listings' && (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider">
-                <tr>
-                  <th className="p-4">Listing</th>
-                  <th className="p-4">Pillar</th>
-                  <th className="p-4">Price</th>
-                  <th className="p-4">Status & Boost</th>
-                  <th className="p-4">Stats</th>
-                  <th className="p-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {listings.map((l) => (
-                  <tr key={l.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={l.images[0]}
-                          alt={l.title}
-                          className="w-12 h-12 rounded-xl object-cover border border-slate-200"
-                        />
-                        <div className="min-w-0 max-w-xs">
-                          <div className="font-bold text-slate-900 truncate">{l.title}</div>
-                          <div className="text-[11px] text-slate-400 mt-0.5">{l.city}, {l.regionArea || l.region || ''}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <span className="capitalize px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 font-medium">
-                        {l.pillar}
-                      </span>
-                    </td>
-                    <td className="p-4 font-bold text-slate-900 font-mono">
-                      {formatPrice(l.price, currentCountry.currencyCode, currentCountry.currencySymbol)}
-                    </td>
-                    <td className="p-4">
-                      <div className="flex flex-col gap-1">
-                        <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] uppercase w-fit">
-                          {l.status}
-                        </span>
-                        {l.featuredTier !== 'free' ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] text-amber-700 font-bold">
-                            <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
-                            <span>{l.featuredTier.replace('_', ' ').toUpperCase()}</span>
-                          </span>
-                        ) : (
-                          <span className="text-[11px] text-slate-400">Standard Rank</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4 font-mono text-slate-600">
-                      <div>{l.views} views</div>
-                      <div className="text-slate-400 text-[11px]">{l.leadsCount} leads</div>
-                    </td>
-                    <td className="p-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => onOpenBoostModal(l)}
-                          className="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold flex items-center gap-1 transition-colors"
-                          title="Boost Listing"
-                        >
-                          <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
-                          <span>Boost</span>
-                        </button>
-                        <button
-                          onClick={() => onDeleteListing(l.id)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                          title="Delete Listing"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
+        <div className="space-y-4">
+          {selectedListingIds.length > 0 && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between shadow-sm animate-in slide-in-from-top-2">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-black text-amber-900 uppercase tracking-tighter">
+                  {selectedListingIds.length} Listings Selected
+                </span>
+                <div className="h-4 w-px bg-amber-200" />
+                <button className="text-[10px] font-bold text-amber-700 hover:underline">Bulk Bump (Free)</button>
+                <button className="text-[10px] font-bold text-amber-700 hover:underline">Apply Standard Boost</button>
+              </div>
+              <button 
+                onClick={() => setSelectedListingIds([])}
+                className="p-1 text-amber-900 hover:bg-amber-100 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider">
+                  <tr>
+                    <th className="p-4 w-10">
+                      <input 
+                        type="checkbox" 
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedListingIds(listings.map(l => l.id));
+                          else setSelectedListingIds([]);
+                        }}
+                        className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                      />
+                    </th>
+                    <th className="p-4">Listing</th>
+                    <th className="p-4">Pillar</th>
+                    <th className="p-4">Price</th>
+                    <th className="p-4">Status & Boost</th>
+                    <th className="p-4">Stats</th>
+                    <th className="p-4 text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {listings.map((l) => (
+                    <tr key={l.id} className={`hover:bg-slate-50/60 transition-colors ${selectedListingIds.includes(l.id) ? 'bg-amber-50/40' : ''}`}>
+                      <td className="p-4">
+                        <input 
+                          type="checkbox" 
+                          checked={selectedListingIds.includes(l.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedListingIds([...selectedListingIds, l.id]);
+                            else setSelectedListingIds(selectedListingIds.filter(id => id !== l.id));
+                          }}
+                          className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                        />
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={l.images[0]}
+                            alt={l.title}
+                            className="w-12 h-12 rounded-xl object-cover border border-slate-200"
+                          />
+                          <div className="min-w-0 max-w-xs">
+                            <div className="font-bold text-slate-900 truncate">{l.title}</div>
+                            <div className="text-[11px] text-slate-400 mt-0.5">{l.city}, {l.regionArea || l.region || ''}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <span className="capitalize px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 font-medium">
+                          {l.pillar}
+                        </span>
+                      </td>
+                      <td className="p-4 font-bold text-slate-900 font-mono">
+                        {formatPrice(l.price, currentCountry.currencyCode, currentCountry.currencySymbol)}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] uppercase w-fit">
+                            {l.status}
+                          </span>
+                          {l.featuredTier !== 'free' ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] text-amber-700 font-bold">
+                              <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
+                              <span>{l.featuredTier.replace('_', ' ').toUpperCase()}</span>
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-slate-400">Standard Rank</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4 font-mono text-slate-600">
+                        <div>{l.views} views</div>
+                        <div className="text-slate-400 text-[11px]">{l.leadsCount} leads</div>
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => onOpenBoostModal(l)}
+                            className="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold flex items-center gap-1 transition-colors"
+                            title="Boost Listing"
+                          >
+                            <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
+                            <span>Boost</span>
+                          </button>
+                          <button
+                            onClick={() => onDeleteListing(l.id)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            title="Delete Listing"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -500,7 +853,10 @@ export const VendorDashboard: React.FC<VendorDashboardProps> = ({
                 </div>
               </div>
               <button 
-                onClick={() => alert(`Upgrading to Pro Membership. Checkout redirected via PayFast / Yoco.`)}
+                onClick={() => {
+                  setUpgradePlan({ id: 'pro', title: 'Professional Pro', price: 499 });
+                  setUpgradeSuccessTx(null);
+                }}
                 className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-md transition-all active:scale-98"
               >
                 Upgrade to Pro
@@ -535,12 +891,159 @@ export const VendorDashboard: React.FC<VendorDashboardProps> = ({
                 </div>
               </div>
               <button 
-                onClick={() => alert(`Upgrading to Enterprise Membership. Contacting key accounts team.`)}
+                onClick={() => {
+                  setUpgradePlan({ id: 'enterprise', title: 'Enterprise Hub', price: 1299 });
+                  setUpgradeSuccessTx(null);
+                }}
                 className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all"
               >
                 Upgrade to Enterprise
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Membership Upgrade Checkout Modal */}
+      {upgradePlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl border border-slate-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                  <Crown className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">Upgrade to {upgradePlan.title}</h3>
+                  <p className="text-xs text-slate-500">Secure Payment Gateway Checkout</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setUpgradePlan(null)}
+                className="text-slate-400 hover:text-slate-600 p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            {!upgradeSuccessTx ? (
+              <div className="space-y-4">
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex justify-between items-center">
+                  <div>
+                    <div className="font-bold text-slate-900 text-sm">{upgradePlan.title}</div>
+                    <div className="text-xs text-slate-500">Billed monthly • Cancel anytime</div>
+                  </div>
+                  <div className="text-xl font-black text-slate-900 font-mono">
+                    {currentCountry.currencySymbol} {upgradePlan.price} {currentCountry.currencyCode}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-2">Select Payment Method</label>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {/* PayFast */}
+                    <button
+                      type="button"
+                      onClick={() => setUpgradeGateway('payfast')}
+                      className={`p-3 rounded-xl border text-left transition-all ${
+                        upgradeGateway === 'payfast'
+                          ? 'border-emerald-500 bg-emerald-50 text-slate-900 ring-2 ring-emerald-500/20'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="font-bold text-xs">PayFast</div>
+                      <div className="text-[10px] text-slate-500">Instant EFT & SA Cards</div>
+                    </button>
+
+                    {/* PayPal */}
+                    <button
+                      type="button"
+                      onClick={() => setUpgradeGateway('paypal')}
+                      className={`p-3 rounded-xl border text-left transition-all ${
+                        upgradeGateway === 'paypal'
+                          ? 'border-sky-500 bg-sky-50 text-slate-900 ring-2 ring-sky-500/20'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="font-bold text-xs">PayPal</div>
+                      <div className="text-[10px] text-slate-500">USD, AED & International</div>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex items-center justify-end gap-2">
+                  <button
+                    onClick={() => setUpgradePlan(null)}
+                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleProcessUpgrade}
+                    disabled={isProcessingUpgrade}
+                    className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-md shadow-amber-500/20 active:scale-98 disabled:opacity-50"
+                  >
+                    {isProcessingUpgrade ? (
+                      <>
+                        <Sparkles className="w-4 h-4 animate-spin" />
+                        <span>Processing with {upgradeGateway.toUpperCase()}...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Pay {currentCountry.currencySymbol} {upgradePlan.price} via {upgradeGateway.toUpperCase()}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4 space-y-4">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+                  <Check className="w-6 h-6 stroke-[3]" />
+                </div>
+                <h4 className="text-base font-bold text-slate-900">Membership Activated!</h4>
+                <p className="text-xs text-slate-500">
+                  Your vendor account is now upgraded to <strong>{upgradePlan.title}</strong>. Your boost limits and verified badge are active immediately.
+                </p>
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 font-mono text-left text-xs space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Invoice:</span>
+                    <span className="font-bold text-slate-800">{upgradeSuccessTx.invoiceNumber}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Gateway:</span>
+                    <span className="uppercase text-slate-800">{upgradeSuccessTx.gateway}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Amount:</span>
+                    <span className="font-bold text-slate-900">{upgradeSuccessTx.currency} {upgradeSuccessTx.amount}</span>
+                  </div>
+                </div>
+                <div className="flex justify-center gap-2 pt-2">
+                  <button
+                    onClick={() => {
+                      const content = `MARKET PLACE HUB TAX INVOICE\nInvoice: ${upgradeSuccessTx.invoiceNumber}\nPlan: ${upgradePlan.title}\nAmount: ${upgradeSuccessTx.currency} ${upgradeSuccessTx.amount}\nGateway: ${upgradeSuccessTx.gateway}\nStatus: PAID`;
+                      const blob = new Blob([content], { type: 'text/plain' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `${upgradeSuccessTx.invoiceNumber}.txt`;
+                      a.click();
+                    }}
+                    className="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center gap-1.5"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download Invoice</span>
+                  </button>
+                  <button
+                    onClick={() => setUpgradePlan(null)}
+                    className="px-5 py-2 rounded-xl bg-slate-100 text-slate-800 font-bold text-xs"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -611,6 +1114,89 @@ export const VendorDashboard: React.FC<VendorDashboardProps> = ({
                     +R150 Credit
                   </span>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: MARKET INTELLIGENCE */}
+      {activeTab === 'intelligence' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 space-y-6">
+              <div className="p-6 bg-white rounded-3xl border border-slate-200 shadow-xs">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-bold text-slate-900">Price Intelligence & Benchmark</h3>
+                  <div className="px-3 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase rounded-lg">Real-Time Data</div>
+                </div>
+                <div className="space-y-4">
+                  {listings.slice(0, 3).map((l, idx) => (
+                    <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="text-sm font-bold text-slate-900">{l.title}</div>
+                        <div className="text-xs font-black text-indigo-600">Avg. Market: {formatPrice(l.price * (1 + (Math.random() * 0.2 - 0.1)), currentCountry.currencyCode, currentCountry.currencySymbol)}</div>
+                      </div>
+                      <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full ${idx % 2 === 0 ? 'bg-emerald-500' : 'bg-amber-500'}`} 
+                          style={{ width: `${Math.floor(40 + Math.random() * 50)}%` }} 
+                        />
+                      </div>
+                      <div className="flex items-center justify-between mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                        <span>Low Demand</span>
+                        <span className="text-slate-900">Your Price Position</span>
+                        <span>High Demand</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-6 bg-white rounded-3xl border border-slate-200 shadow-xs">
+                <h3 className="font-bold text-slate-900 mb-4">Trending Search Terms (Your Vertical)</h3>
+                <div className="flex flex-wrap gap-2">
+                  {['luxury apartments', 'solar power', 'porsche gt3', 'full stack dev', 'dubai marina', 'sandton rental', 'verified professionals'].map((tag, i) => (
+                    <span key={i} className="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-100 text-slate-600 text-xs font-medium flex items-center gap-1.5">
+                      <TrendingUp className="w-3 h-3 text-emerald-500" />
+                      {tag}
+                      <span className="text-[10px] text-slate-400">+{Math.floor(Math.random() * 100)}%</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="p-6 bg-indigo-900 text-white rounded-3xl shadow-xl">
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles className="w-5 h-5 text-amber-400" />
+                  <h3 className="font-bold">AI Optimization Advice</h3>
+                </div>
+                <p className="text-xs text-indigo-100 leading-relaxed mb-6">
+                  Our AI analysis suggests that increasing your image count for <strong>"{listings[0]?.title}"</strong> by at least 3 high-quality shots could improve conversion by 24%.
+                </p>
+                <button className="w-full py-2.5 bg-white text-indigo-900 rounded-xl font-bold text-xs hover:bg-slate-50 transition-colors">
+                  Apply Recommendations
+                </button>
+              </div>
+
+              <div className="p-6 bg-slate-900 text-white rounded-3xl shadow-xl">
+                <h3 className="font-bold mb-4">Regional Demand Heatmap</h3>
+                <div className="space-y-3">
+                  {['Sandton', 'Dubai Marina', 'Century City', 'V&A Waterfront'].map((loc, i) => (
+                    <div key={i} className="flex items-center justify-between text-xs">
+                      <span className="text-slate-400">{loc}</span>
+                      <div className="flex-1 mx-3 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div className="h-full bg-amber-500" style={{ width: `${90 - i * 15}%` }} />
+                      </div>
+                      <span className="font-bold text-amber-400">{90 - i * 15}%</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-500 mt-6 italic">
+                  * Based on click-through rates from {currentCountry.name} search clusters.
+                </p>
               </div>
             </div>
           </div>

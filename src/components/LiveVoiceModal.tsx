@@ -92,65 +92,154 @@ export const LiveVoiceModal: React.FC<LiveVoiceModalProps> = ({
     `What are the AfCFTA rules of origin for food exports?`,
   ];
 
-  const handleStartListening = () => {
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-    }
+  const [ws, setWs] = useState<WebSocket | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      // Fallback: simulate voice query
-      handleSendVoicePrompt(quickPrompts[0]);
-      return;
-    }
-
-    try {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      recognitionRef.current = recognition;
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = currentCountry.isoCode === 'AE' ? 'ar-AE' : 'en-ZA';
-
-      recognition.onstart = () => {
-        setIsRecording(true);
-        setUserSpokenText('');
+  // Initialize WebSocket connection
+  useEffect(() => {
+    if (isOpen) {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const socket = new WebSocket(`${protocol}//${window.location.host}/live`);
+      
+      socket.onopen = () => {
+        console.log('Gemini Live: WebSocket connected');
+        setWs(socket);
       };
 
-      recognition.onresult = (event: any) => {
-        const transcript = Array.from(event.results)
-          .map((result: any) => result[0].transcript)
-          .join('');
-        setUserSpokenText(transcript);
-      };
-
-      recognition.onerror = (event: any) => {
-        console.warn('Speech recognition error:', event.error);
-        setIsRecording(false);
-      };
-
-      recognition.onend = () => {
-        setIsRecording(false);
-        if (userSpokenText.trim()) {
-          handleSendVoicePrompt(userSpokenText.trim());
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.audio) {
+            playBase64Audio(data.audio);
+          }
+          if (data.interrupted) {
+            stopPlayback();
+          }
+        } catch (err) {
+          console.error('Error parsing WS message:', err);
         }
       };
 
-      recognition.start();
+      socket.onerror = (err) => console.error('Gemini Live WS Error:', err);
+      socket.onclose = () => {
+        console.log('Gemini Live: WebSocket closed');
+        setWs(null);
+      };
+
+      return () => {
+        socket.close();
+      };
+    }
+  }, [isOpen]);
+
+  const playbackContextRef = useRef<AudioContext | null>(null);
+  const nextPlayTimeRef = useRef<number>(0);
+
+  const playBase64Audio = async (base64Audio: string) => {
+    try {
+      if (!playbackContextRef.current) {
+        playbackContextRef.current = new AudioContext({ sampleRate: 24000 });
+        nextPlayTimeRef.current = playbackContextRef.current.currentTime;
+      }
+      
+      const ctx = playbackContextRef.current;
+      const binaryString = atob(base64Audio);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      
+      const pcm16 = new Int16Array(bytes.buffer);
+      const float32 = new Float32Array(pcm16.length);
+      for (let i = 0; i < pcm16.length; i++) {
+        float32[i] = pcm16[i] / 0x7FFF;
+      }
+      
+      const audioBuffer = ctx.createBuffer(1, float32.length, 24000);
+      audioBuffer.getChannelData(0).set(float32);
+      
+      const source = ctx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(ctx.destination);
+      
+      const startTime = Math.max(ctx.currentTime, nextPlayTimeRef.current);
+      source.start(startTime);
+      nextPlayTimeRef.current = startTime + audioBuffer.duration;
+      
+      setIsSpeaking(true);
+      source.onended = () => {
+        if (ctx && ctx.currentTime >= nextPlayTimeRef.current - 0.1) {
+          setIsSpeaking(false);
+        }
+      };
     } catch (err) {
-      console.warn('Speech recognition initialization failed:', err);
-      setIsRecording(false);
+      console.error('Error playing streaming audio:', err);
+    }
+  };
+
+  const stopPlayback = () => {
+    if (playbackContextRef.current) {
+      playbackContextRef.current.close().catch(() => {});
+      playbackContextRef.current = null;
+    }
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.pause();
+      audioPlayerRef.current = null;
+    }
+    nextPlayTimeRef.current = 0;
+    setIsSpeaking(false);
+  };
+  const handleStartListening = async () => {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      
+      const audioContext = new AudioContext({ sampleRate: 16000 });
+      audioContextRef.current = audioContext;
+      
+      const source = audioContext.createMediaStreamSource(stream);
+      const processor = audioContext.createScriptProcessor(4096, 1, 1);
+      processorRef.current = processor;
+
+      processor.onaudioprocess = (e) => {
+        const inputData = e.inputBuffer.getChannelData(0);
+        // Convert Float32 to Int16 PCM
+        const pcmData = new Int16Array(inputData.length);
+        for (let i = 0; i < inputData.length; i++) {
+          pcmData[i] = Math.max(-1, Math.min(1, inputData[i])) * 0x7FFF;
+        }
+        // Send as base64
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(pcmData.buffer)));
+        ws.send(JSON.stringify({ audio: base64 }));
+      };
+
+      source.connect(processor);
+      processor.connect(audioContext.destination);
+      
+      setIsRecording(true);
+    } catch (err) {
+      console.error('Error starting mic capture:', err);
     }
   };
 
   const handleStopListening = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
+    if (processorRef.current) {
+      processorRef.current.disconnect();
+      processorRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
     setIsRecording(false);
-    if (userSpokenText.trim()) {
-      handleSendVoicePrompt(userSpokenText.trim());
-    }
   };
 
   const handleSendVoicePrompt = async (promptText: string) => {
@@ -202,26 +291,6 @@ export const LiveVoiceModal: React.FC<LiveVoiceModalProps> = ({
       console.error('Live voice conversation error:', err);
     } finally {
       setIsProcessing(false);
-    }
-  };
-
-  const playBase64Audio = (base64Audio: string) => {
-    try {
-      setIsSpeaking(true);
-      const audioUrl = `data:audio/mp3;base64,${base64Audio}`;
-      const audio = new Audio(audioUrl);
-      audioPlayerRef.current = audio;
-      audio.onended = () => setIsSpeaking(false);
-      audio.onerror = () => {
-        setIsSpeaking(false);
-        // Fallback to browser voice if base64 format unsupported
-        if ('speechSynthesis' in window && transcripts.length > 0) {
-          playBrowserVoice(transcripts[transcripts.length - 1].text);
-        }
-      };
-      audio.play();
-    } catch (err) {
-      setIsSpeaking(false);
     }
   };
 
