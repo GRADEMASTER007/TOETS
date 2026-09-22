@@ -1,169 +1,67 @@
 {
-  "collections": [
-    {
-      "name": "users",
-      "fields": {
-        "uid": "string",
-        "displayName": "string",
-        "email": "string",
-        "photoURL": "string?",
-        "role": "string",
-        "countryCode": "string",
-        "phoneNumber": "string?",
-        "whatsapp": "string?",
-        "verified": "boolean",
-        "kycStatus": "string",
-        "memberSince": "timestamp",
-        "lastLogin": "timestamp",
-        "subscriptionPlanId": "string?",
-        "subscriptionExpiry": "timestamp?",
-        "walletBalance": "number"
-      }
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Public and private user information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "vendor", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
     },
-    {
-      "name": "listings",
-      "fields": {
-        "title": "string",
-        "slug": "string",
-        "pillar": "string",
-        "countryCode": "string",
-        "city": "string",
-        "regionArea": "string",
-        "region": "string?",
-        "address": "string",
-        "coordinates": "object",
-        "categoryId": "string",
-        "categoryName": "string",
-        "subcategory": "string",
-        "price": "number",
-        "currencyCode": "string",
-        "description": "string",
-        "images": "array",
-        "featuredTier": "string",
-        "featuredExpiry": "timestamp?",
-        "verifiedVendor": "boolean",
-        "vendor": "object",
-        "datePosted": "timestamp",
-        "status": "string",
-        "views": "number",
-        "saves": "number",
-        "leadsCount": "number",
-        "propertyDetails": "object?",
-        "marketplaceDetails": "object?",
-        "serviceDetails": "object?",
-        "motorDetails": "object?",
-        "jobDetails": "object?"
-      }
+    "Listing": {
+      "title": "Marketplace Listing",
+      "description": "A product, service, or property listing",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "title": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 5000 },
+        "price": { "type": "number" },
+        "currencyCode": { "type": "string" },
+        "pillar": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "sold", "deleted"] },
+        "featuredTier": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "title", "price", "pillar", "status"]
     },
-    {
-      "name": "categories",
-      "fields": {
-        "name": "string",
-        "pillar": "string",
-        "iconName": "string",
-        "subcategories": "array",
-        "active": "boolean"
-      }
-    },
-    {
-      "name": "countries",
-      "fields": {
-        "name": "string",
-        "isoCode": "string",
-        "subdomain": "string",
-        "currencyCode": "string",
-        "currencySymbol": "string",
-        "flag": "string",
-        "region": "string",
-        "active": "boolean",
-        "taxRate": "number?",
-        "exchangeRateToUSD": "number?"
-      }
-    },
-    {
-      "name": "orders",
-      "fields": {
-        "listingId": "string",
-        "listingTitle": "string",
-        "listingImage": "string",
-        "buyerId": "string",
-        "buyerName": "string",
-        "sellerId": "string",
-        "sellerName": "string",
-        "amount": "number",
-        "currency": "string",
-        "commissionAmount": "number",
-        "sellerEarnings": "number",
-        "status": "string",
-        "paymentType": "string",
-        "paymentMethod": "string?",
-        "createdAt": "timestamp",
-        "updatedAt": "timestamp"
-      }
-    },
-    {
-      "name": "leads",
-      "fields": {
-        "listingId": "string",
-        "listingTitle": "string",
-        "sellerId": "string",
-        "buyerId": "string?",
-        "buyerName": "string",
-        "buyerEmail": "string",
-        "buyerPhone": "string",
-        "message": "string",
-        "status": "string",
-        "type": "string",
-        "createdAt": "timestamp"
-      }
-    },
-    {
-      "name": "ledger",
-      "fields": {
-        "transactionId": "string",
-        "userId": "string",
-        "type": "string",
-        "amount": "number",
-        "currency": "string",
-        "commission": "number",
-        "tax": "number",
-        "netAmount": "number",
-        "status": "string",
-        "createdAt": "timestamp",
-        "description": "string?"
-      }
-    },
-    {
-      "name": "adCampaigns",
-      "fields": {
-        "advertiserId": "string",
-        "name": "string",
-        "type": "string",
-        "placement": "string",
-        "targetCountry": "string?",
-        "targetPillar": "string?",
-        "budget": "number",
-        "spent": "number",
-        "startDate": "timestamp",
-        "endDate": "timestamp",
-        "impressions": "number",
-        "clicks": "number",
-        "status": "string",
-        "imageUrl": "string?",
-        "linkUrl": "string"
-      }
-    },
-    {
-      "name": "subscriptionPlans",
-      "fields": {
-        "name": "string",
-        "pillar": "string",
-        "priceMonthly": "number",
-        "currency": "string",
-        "listingLimit": "number",
-        "features": "array",
-        "reducedCommission": "number?"
-      }
+    "Message": {
+      "title": "Chat Message",
+      "description": "A message in a conversation thread",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "text": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderId", "text", "createdAt"]
     }
-  ]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Global user profiles"
+    },
+    "/listings/{listingId}": {
+      "schema": "Listing",
+      "description": "Global marketplace listings"
+    },
+    "/chats/{chatId}": {
+      "schema": "object",
+      "description": "Chat thread metadata"
+    },
+    "/chats/{chatId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Messages within a chat"
+    }
+  }
 }

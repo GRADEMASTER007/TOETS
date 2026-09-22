@@ -212,7 +212,7 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
           </div>
         </div>
 
-        {/* Configuration Bar: Roles */}
+        {/* Configuration Bar: Roles & Grounding */}
         <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/80 flex flex-wrap items-center justify-between gap-3 text-xs">
           {/* Role selector buttons */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
@@ -236,6 +236,35 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
               );
             })}
           </div>
+
+          {/* Grounding Toggles */}
+          <div className="flex items-center gap-3 ml-auto">
+            <button
+              onClick={() => setUseGoogleSearch(!useGoogleSearch)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all ${
+                useGoogleSearch 
+                  ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400' 
+                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span className="font-bold">Google Search</span>
+              {useGoogleSearch && <Check className="w-3 h-3" />}
+            </button>
+
+            <button
+              onClick={() => setUseGoogleMaps(!useGoogleMaps)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all ${
+                useGoogleMaps 
+                  ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400' 
+                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'
+              }`}
+            >
+              <MapPin className="w-3.5 h-3.5" />
+              <span className="font-bold">Google Maps</span>
+              {useGoogleMaps && <Check className="w-3 h-3" />}
+            </button>
+          </div>
         </div>
 
         {/* Scrollable Message Thread */}
@@ -256,6 +285,34 @@ export const GeminiChatModal: React.FC<GeminiChatModalProps> = ({
                   }`}
                 >
                   <p className="whitespace-pre-line leading-relaxed">{m.text}</p>
+
+                  {/* Grounding Sources */}
+                  {m.groundingMetadata?.groundingChunks && (
+                    <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-700/50 space-y-2">
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        <Search className="w-3 h-3" />
+                        <span>Sources Used</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {m.groundingMetadata.groundingChunks.map((chunk, i) => {
+                          const source = chunk.web || chunk.maps;
+                          if (!source) return null;
+                          return (
+                            <a
+                              key={i}
+                              href={source.uri}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[10px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 font-bold"
+                            >
+                              <span className="max-w-[120px] truncate">{source.title}</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Footer metadata with time and TTS */}
                   <div

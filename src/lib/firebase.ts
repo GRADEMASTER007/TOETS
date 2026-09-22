@@ -1,46 +1,29 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  signOut, 
-  onAuthStateChanged, 
-  User 
-} from 'firebase/auth';
+import { initializeApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { 
   getFirestore, 
-  collection, 
   doc, 
+  getDoc, 
   setDoc, 
+  updateDoc, 
+  collection, 
+  query, 
+  where, 
   getDocs, 
-  deleteDoc, 
-  addDoc,
-  serverTimestamp,
+  addDoc, 
+  onSnapshot, 
   getDocFromServer,
-  getDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  updateDoc
+  Timestamp,
+  serverTimestamp
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
-import { Listing, Review, UserProfile, Order, UserRole } from '../types';
 
-// Initialize Firebase App singleton
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-
+const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-// Initialize Firestore targeting the provisioned database ID
-const config = firebaseConfig as any;
-export const db = config.firestoreDatabaseId
-  ? getFirestore(app, config.firestoreDatabaseId)
-  : getFirestore(app);
-
-// Error Handling Infrastructure (per Firebase Integration Skill)
+// Validation helper for Firestore errors
 export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -50,7 +33,7 @@ export enum OperationType {
   WRITE = 'write',
 }
 
-export interface FirestoreErrorInfo {
+interface FirestoreErrorInfo {
   error: string;
   operationType: OperationType;
   path: string | null;
@@ -58,13 +41,7 @@ export interface FirestoreErrorInfo {
     userId?: string | null;
     email?: string | null;
     emailVerified?: boolean | null;
-    isAnonymous?: boolean | null;
-    tenantId?: string | null;
-    providerInfo?: {
-      providerId?: string | null;
-      email?: string | null;
-    }[];
-  };
+  }
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
@@ -74,292 +51,167 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
       emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
-      providerInfo: auth.currentUser?.providerData?.map(provider => ({
-        providerId: provider.providerId,
-        email: provider.email,
-      })) || []
     },
     operationType,
     path
   };
-  console.warn('Firestore Error Context:', JSON.stringify(errInfo));
-  return errInfo;
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
 }
 
-// Test Connection on Boot
-export async function testConnection() {
+// Auth Helpers
+export const onAuthUserChanged = (callback: (user: any) => void) => onAuthStateChanged(auth, callback);
+
+export const getUserProfile = async (uid: string): Promise<any> => {
+  const userRef = doc(db, 'users', uid);
+  const userSnap = await getDoc(userRef);
+  return userSnap.exists() ? userSnap.data() : null;
+};
+
+export const logOut = () => signOut(auth);
+
+export const signInWithGoogle = async () => {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    const user = result.user;
+    
+    // Sync user profile to Firestore
+    const userRef = doc(db, 'users', user.uid);
+    const userSnap = await getDoc(userRef);
+    
+    let profileData: any;
+    if (!userSnap.exists()) {
+      profileData = {
+        uid: user.uid,
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        role: 'user',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+      await setDoc(userRef, profileData);
+    } else {
+      profileData = userSnap.data();
+    }
+    
+    return profileData;
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
+  }
+};
+
+// Data Helpers
+export const fetchFirestoreListings = async () => {
+  const q = query(collection(db, 'listings'), where('status', '==', 'active'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+export const saveListingToFirestore = async (listing: any) => {
+  const listingId = listing.id || doc(collection(db, 'listings')).id;
+  const listingRef = doc(db, 'listings', listingId);
+  await setDoc(listingRef, { ...listing, id: listingId, updatedAt: serverTimestamp() }, { merge: true });
+  return listingId;
+};
+
+export const fetchUserFavoritesFromFirestore = async (uid: string) => {
+  const userRef = doc(db, 'users', uid);
+  const userSnap = await getDoc(userRef);
+  return userSnap.exists() ? userSnap.data().favorites || [] : [];
+};
+
+export const toggleFavoriteInFirestore = async (uid: string, listingId: string, isFavorite: boolean) => {
+  const userRef = doc(db, 'users', uid);
+  const userSnap = await getDoc(userRef);
+  if (userSnap.exists()) {
+    const favorites = userSnap.data().favorites || [];
+    const updated = isFavorite 
+      ? [...new Set([...favorites, listingId])]
+      : favorites.filter((id: string) => id !== listingId);
+    await updateDoc(userRef, { favorites: updated, updatedAt: serverTimestamp() });
+  }
+};
+
+export const fetchOrders = async () => {
+  const snap = await getDocs(collection(db, 'orders'));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+export const submitLeadToFirestore = async (leadData: any) => {
+  const leadRef = doc(collection(db, 'leads'));
+  await setDoc(leadRef, {
+    ...leadData,
+    createdAt: serverTimestamp(),
+  });
+  return leadRef.id;
+};
+
+export const submitReviewToFirestore = async (reviewData: any) => {
+  const reviewRef = doc(collection(db, 'reviews'));
+  await setDoc(reviewRef, {
+    ...reviewData,
+    createdAt: serverTimestamp(),
+  });
+  return reviewRef.id;
+};
+
+export const createOrder = async (orderData: any) => {
+  const orderRef = doc(collection(db, 'orders'));
+  await setDoc(orderRef, {
+    ...orderData,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return orderRef.id;
+};
+
+export const saveChatSessionToFirestore = async (uid: string, messages: any[], role: string, model: string) => {
+  const chatRef = doc(collection(db, 'chats'));
+  await setDoc(chatRef, {
+    participantIds: [uid],
+    role,
+    model,
+    updatedAt: serverTimestamp(),
+  });
+  
+  // Add messages subcollection
+  for (const msg of messages) {
+    const msgRef = doc(collection(db, `chats/${chatRef.id}/messages`));
+    await setDoc(msgRef, {
+      ...msg,
+      createdAt: serverTimestamp(),
+    });
+  }
+  return chatRef.id;
+};
+
+export const logout = logOut;
+
+// Connection test
+async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
+    if(error instanceof Error && error.message.includes('the client is offline')) {
       console.error("Please check your Firebase configuration.");
     }
   }
 }
 testConnection();
 
-// Authentication Helpers
-export async function signInWithGoogle(): Promise<UserProfile> {
-  const result = await signInWithPopup(auth, googleProvider);
-  const user = result.user;
-  
-  // Upsert user profile document
-  const pathForUser = `users/${user.uid}`;
-  try {
-    const userRef = doc(db, 'users', user.uid);
-    const userDoc = await getDoc(userRef);
-    
-    let role: UserRole = 'buyer';
-    // Set super admin based on user email
-    if (user.email === 'healthyfieldsbus2@gmail.com') {
-      role = 'admin';
-    } else if (userDoc.exists()) {
-      role = userDoc.data().role || 'buyer';
-    }
-
-    const profile: Partial<UserProfile> = {
-      uid: user.uid,
-      displayName: user.displayName || 'Market Place Hub User',
-      email: user.email || '',
-      photoURL: user.photoURL || undefined,
-      role: role,
-      lastLogin: new Date().toISOString(),
-    };
-
-    if (!userDoc.exists()) {
-      profile.memberSince = new Date().toISOString();
-      profile.commissionRate = 0.05; // 5% default
-    }
-
-    await setDoc(userRef, profile, { merge: true });
-    return { ...userDoc.data(), ...profile } as UserProfile;
-  } catch (err) {
-    handleFirestoreError(err, OperationType.WRITE, pathForUser);
-    throw err;
-  }
-}
-
-export async function logOut(): Promise<void> {
-  await signOut(auth);
-}
-
-export function onAuthUserChanged(callback: (user: User | null) => void) {
-  return onAuthStateChanged(auth, callback);
-}
-
-export async function getUserProfile(uid: string): Promise<UserProfile | null> {
-  const path = `users/${uid}`;
-  try {
-    const userRef = doc(db, 'users', uid);
-    const userDoc = await getDoc(userRef);
-    return userDoc.exists() ? (userDoc.data() as UserProfile) : null;
-  } catch (err) {
-    handleFirestoreError(err, OperationType.GET, path);
-    return null;
-  }
-}
-
-// ----------------------------------------------------------------------
-// Firestore Database Operations: Favorites
-// ----------------------------------------------------------------------
-export async function fetchUserFavoritesFromFirestore(userId: string): Promise<string[]> {
-  const pathForFavs = `users/${userId}/favorites`;
-  try {
-    const favsRef = collection(db, 'users', userId, 'favorites');
-    const snapshot = await getDocs(favsRef);
-    return snapshot.docs.map((d) => d.id);
-  } catch (err) {
-    handleFirestoreError(err, OperationType.GET, pathForFavs);
-    return [];
-  }
-}
-
-export async function toggleFavoriteInFirestore(userId: string, listingId: string, isFav: boolean): Promise<void> {
-  const pathForFavDoc = `users/${userId}/favorites/${listingId}`;
-  try {
-    const favDocRef = doc(db, 'users', userId, 'favorites', listingId);
-    if (isFav) {
-      await setDoc(favDocRef, {
-        listingId,
-        createdAt: serverTimestamp(),
-      });
-    } else {
-      await deleteDoc(favDocRef);
-    }
-  } catch (err) {
-    handleFirestoreError(err, isFav ? OperationType.WRITE : OperationType.DELETE, pathForFavDoc);
-  }
-}
-
-// ----------------------------------------------------------------------
-// Firestore Database Operations: Listings
-// ----------------------------------------------------------------------
-export async function saveListingToFirestore(listing: Listing): Promise<void> {
-  const pathForListing = `listings/${listing.id}`;
-  try {
-    const listingDocRef = doc(db, 'listings', listing.id);
-    await setDoc(listingDocRef, {
-      ...listing,
-      updatedAt: serverTimestamp(),
-    }, { merge: true });
-  } catch (err) {
-    handleFirestoreError(err, OperationType.WRITE, pathForListing);
-  }
-}
-
-export async function fetchFirestoreListings(filters?: { vendorId?: string }): Promise<Listing[]> {
-  const pathForListings = 'listings';
-  try {
-    let listingsRef = collection(db, 'listings');
-    let q = query(listingsRef);
-    
-    if (filters?.vendorId) {
-      q = query(listingsRef, where('vendor.id', '==', filters.vendorId));
-    }
-    
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map((d) => d.data() as Listing);
-  } catch (err) {
-    handleFirestoreError(err, OperationType.GET, pathForListings);
-    return [];
-  }
-}
-
-// ----------------------------------------------------------------------
-// Firestore Database Operations: Orders & Transactions
-// ----------------------------------------------------------------------
-export async function createOrder(order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-  const path = 'orders';
-  try {
-    const ordersRef = collection(db, 'orders');
-    const docRef = await addDoc(ordersRef, {
-      ...order,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-    return docRef.id;
-  } catch (err) {
-    handleFirestoreError(err, OperationType.CREATE, path);
-    throw err;
-  }
-}
-
-export async function fetchOrders(filters?: { buyerId?: string, sellerId?: string }): Promise<Order[]> {
-  const path = 'orders';
-  try {
-    const ordersRef = collection(db, 'orders');
-    let q = query(ordersRef, orderBy('createdAt', 'desc'));
-    
-    if (filters?.buyerId) {
-      q = query(ordersRef, where('buyerId', '==', filters.buyerId), orderBy('createdAt', 'desc'));
-    } else if (filters?.sellerId) {
-      q = query(ordersRef, where('sellerId', '==', filters.sellerId), orderBy('createdAt', 'desc'));
-    }
-    
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Order));
-  } catch (err) {
-    handleFirestoreError(err, OperationType.GET, path);
-    return [];
-  }
-}
-
-export async function updateOrderStatus(orderId: string, status: Order['status']): Promise<void> {
-  const path = `orders/${orderId}`;
-  try {
-    const orderRef = doc(db, 'orders', orderId);
-    await updateDoc(orderRef, {
-      status,
-      updatedAt: serverTimestamp(),
-    });
-  } catch (err) {
-    handleFirestoreError(err, OperationType.UPDATE, path);
-  }
-}
-
-// ----------------------------------------------------------------------
-// Firestore Database Operations: Leads & Inquiries
-// ----------------------------------------------------------------------
-export async function submitLeadToFirestore(lead: {
-  listingId: string;
-  vendorId?: string;
-  senderName: string;
-  senderPhone?: string;
-  senderEmail?: string;
-  message: string;
-}): Promise<string> {
-  const pathForLeads = 'leads';
-  try {
-    const leadsRef = collection(db, 'leads');
-    const docRef = await addDoc(leadsRef, {
-      ...lead,
-      createdAt: serverTimestamp(),
-      status: 'pending',
-    });
-    return docRef.id;
-  } catch (err) {
-    handleFirestoreError(err, OperationType.CREATE, pathForLeads);
-    return `local_${Date.now()}`;
-  }
-}
-
-// ----------------------------------------------------------------------
-// Firestore Database Operations: Reviews
-// ----------------------------------------------------------------------
-export async function submitReviewToFirestore(review: Review): Promise<void> {
-  const pathForReview = `reviews/${review.id}`;
-  try {
-    const reviewDocRef = doc(db, 'reviews', review.id);
-    await setDoc(reviewDocRef, {
-      ...review,
-      createdAt: serverTimestamp(),
-    });
-  } catch (err) {
-    handleFirestoreError(err, OperationType.WRITE, pathForReview);
-  }
-}
-
-// ----------------------------------------------------------------------
-// Firestore Database Operations: KYC Verification Submissions
-// ----------------------------------------------------------------------
-export async function submitKYCDocToFirestore(kycData: {
-  userId: string;
-  businessName: string;
-  registrationNumber: string;
-  documentType: string;
-  documentName: string;
-  countryCode: string;
-}): Promise<void> {
-  const pathForKYC = `kyc/${kycData.userId}`;
-  try {
-    const kycDocRef = doc(db, 'kyc', kycData.userId);
-    await setDoc(kycDocRef, {
-      ...kycData,
-      status: 'verified',
-      submittedAt: serverTimestamp(),
-    }, { merge: true });
-  } catch (err) {
-    handleFirestoreError(err, OperationType.WRITE, pathForKYC);
-  }
-}
-
-// ----------------------------------------------------------------------
-// Firestore Database Operations: AI Chat Logs & History
-// ----------------------------------------------------------------------
-export async function saveChatSessionToFirestore(userId: string, messages: any[], role: string, model: string): Promise<void> {
-  const pathForChat = `chats/${userId}_${role}`;
-  try {
-    const chatDocRef = doc(db, 'chats', `${userId}_${role}`);
-    await setDoc(chatDocRef, {
-      userId,
-      role,
-      model,
-      messages: messages.slice(-20),
-      updatedAt: serverTimestamp(),
-    }, { merge: true });
-  } catch (err) {
-    handleFirestoreError(err, OperationType.WRITE, pathForChat);
-  }
-}
+export {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  onSnapshot,
+  Timestamp,
+  serverTimestamp
+};

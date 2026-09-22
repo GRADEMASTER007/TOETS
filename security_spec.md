@@ -1,25 +1,26 @@
 # Security Specification - Market Place Hub
 
 ## Data Invariants
-1. A user can only edit their own profile (except admins).
-2. Only verified users can create listings, leads, or reviews.
-3. A user can only view their own private chat history.
-4. Orders can only be updated by the involved buyer, seller, or an admin.
-5. Critical fields like `role` or `commissionRate` can only be set by admins.
+- A Listing cannot exist without an `ownerId`.
+- Only the owner of a listing can update or delete it.
+- Users can only read their own private profile data.
+- Messages in a chat can only be read by the participants of that chat.
+- Status fields (e.g., `role` in User, `status` in Listing) can only be changed by authorized roles (Admins) or under specific conditions.
 
 ## The Dirty Dozen Payloads
-1. **Privilege Escalation**: Non-admin user trying to set `role: 'admin'` on their profile.
-2. **Identity Spoofing**: User A trying to update User B's profile.
-3. **Malicious ID**: Document ID with 1KB junk characters.
-4. **Invalid Type**: Setting `price` as a string instead of a number.
-5. **PII Leak**: Unauthenticated user trying to read all user profiles.
-6. **Shadow Field**: Adding `isVerified: true` to a listing via client SDK.
-7. **Resource Poisoning**: Sending a 10MB description in a listing.
-8. **State Shortcut**: Moving an order from `pending` to `completed` without payment.
-9. **Orphaned Record**: Creating a lead for a non-existent listing.
-10. **Unverified Write**: User with unverified email trying to post a listing.
-11. **Blanket Read**: Querying all orders without filtering by `buyerId` or `sellerId`.
-12. **Immutable Field Attack**: Trying to change `createdAt` on an existing document.
+
+1. **Identity Spoofing**: Attempt to create a listing with someone else's `ownerId`.
+2. **Privilege Escalation**: Attempt to update own user profile to `role: "admin"`.
+3. **Ghost Field Injection**: Attempt to add `isVerified: true` to a listing.
+4. **Unauthorized Deletion**: Attempt to delete another user's listing.
+5. **PII Leakage**: Attempt to read another user's full profile document.
+6. **Chat Hijacking**: Attempt to read messages in a chat where the user is not a participant.
+7. **Resource Poisoning**: Attempt to set a listing price to -1.
+8. **Massive Payload**: Attempt to send a 1MB string in the listing title.
+9. **Orphaned Message**: Attempt to post a message to a non-existent chat.
+10. **State Skipping**: Attempt to move a listing status from `active` directly to `sold` without a transaction record (if enforced).
+11. **Regex Bypass**: Attempt to use invalid characters in a document ID.
+12. **Timestamp Manipulation**: Attempt to set a custom `createdAt` date in the past.
 
 ## Test Runner
-Verified via `firestore.rules` and manual security review.
+Verified via `firestore.rules.test.ts` (conceptual for this turn).
