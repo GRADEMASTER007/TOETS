@@ -1,45 +1,158 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // User profile documents
-    match /users/{userId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
     
-    // Public listings across all pillars (Marketplace, Business, Services, Property)
-    match /listings/{listingId} {
-      allow read: if true;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null;
-    }
-    
-    // User favorites
-    match /users/{userId}/favorites/{favId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    // Trade inquiries and customer leads
-    match /leads/{leadId} {
-      allow create: if true;
-      allow read: if request.auth != null;
-    }
-    
-    // Verified ratings and reviews
-    match /reviews/{reviewId} {
-      allow read: if true;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null;
-    }
-    
-    // KYC submissions and compliance records
-    match /kyc/{kycId} {
-      allow read, write: if request.auth != null;
+    // Default Deny Catch-All (Pillar 1)
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    // Chat history
+    // Global Hardened Helper Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'healthyfieldsbus2@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Entity Validation Helpers
+    function isValidUserProfile(data) {
+      return data.uid is string && 
+        data.uid.size() > 0 && 
+        data.uid.size() <= 128 &&
+        data.uid == request.auth.uid &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100)) &&
+        (!('email' in data) || (data.email is string && data.email.size() <= 120)) &&
+        (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 1000));
+    }
+
+    function isValidFavorite(data) {
+      return data.listingId is string && 
+        data.listingId.size() > 0 && 
+        data.listingId.size() <= 128;
+    }
+
+    function isValidListing(data) {
+      return data.id is string && isValidId(data.id) &&
+        data.title is string && data.title.size() >= 3 && data.title.size() <= 200 &&
+        data.pillar in ['marketplace', 'business', 'service', 'property'] &&
+        data.countryCode is string && data.countryCode.size() <= 4 &&
+        data.vendorId is string && isValidId(data.vendorId) &&
+        (!('price' in data) || (data.price is number)) &&
+        (!('city' in data) || (data.city is string && data.city.size() <= 100)) &&
+        (!('categoryName' in data) || (data.categoryName is string && data.categoryName.size() <= 100)) &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 5000));
+    }
+
+    function isValidLead(data) {
+      return data.listingId is string && isValidId(data.listingId) &&
+        data.senderName is string && data.senderName.size() >= 2 && data.senderName.size() <= 100 &&
+        data.message is string && data.message.size() >= 1 && data.message.size() <= 2000 &&
+        (!('senderEmail' in data) || (data.senderEmail is string && data.senderEmail.size() <= 120)) &&
+        (!('senderPhone' in data) || (data.senderPhone is string && data.senderPhone.size() <= 40));
+    }
+
+    function isValidReview(data) {
+      return data.id is string && isValidId(data.id) &&
+        data.listingId is string && isValidId(data.listingId) &&
+        data.authorName is string && data.authorName.size() >= 2 && data.authorName.size() <= 100 &&
+        data.authorId is string && data.authorId == request.auth.uid &&
+        data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+        data.comment is string && data.comment.size() >= 2 && data.comment.size() <= 1000;
+    }
+
+    function isValidKYC(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+        data.businessName is string && data.businessName.size() >= 2 && data.businessName.size() <= 150 &&
+        data.registrationNumber is string && data.registrationNumber.size() >= 2 && data.registrationNumber.size() <= 100;
+    }
+
+    function isValidChat(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+        data.role is string && data.role.size() <= 50 &&
+        data.model is string && data.model.size() <= 50;
+    }
+
+    // Health-Check Connection Test
+    match /test/connection {
+      allow read: if true;
+    }
+
+    // User Profile Documents
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create, update: if isOwner(userId) && isValidUserProfile(incoming());
+      allow delete: if isAdmin();
+
+      // User Saved Favorites Subcollection
+      match /favorites/{favId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidFavorite(incoming());
+      }
+    }
+
+    // Public Listings across 4 Pillars & 55 Countries
+    match /listings/{listingId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidListing(incoming()) && incoming().vendorId == request.auth.uid;
+      allow update: if isSignedIn() && (existing().vendorId == request.auth.uid || isAdmin()) && isValidListing(incoming());
+      allow delete: if isSignedIn() && (existing().vendorId == request.auth.uid || isAdmin());
+    }
+
+    // Trade Inquiries & Customer Leads
+    match /leads/{leadId} {
+      allow create: if isValidLead(incoming());
+      allow get, list: if isSignedIn() && (resource.data.vendorId == request.auth.uid || isAdmin());
+      allow update, delete: if isAdmin();
+    }
+
+    // Verified Reviews & Ratings
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidReview(incoming());
+      allow update: if isSignedIn() && (existing().authorId == request.auth.uid || isAdmin()) && isValidReview(incoming());
+      allow delete: if isSignedIn() && (existing().authorId == request.auth.uid || isAdmin());
+    }
+
+    // KYC Compliance Submissions
+    match /kyc/{kycId} {
+      allow read: if isOwner(kycId) || isAdmin();
+      allow create, update: if isOwner(kycId) && isValidKYC(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // Chat History & AI Session Threads
     match /chats/{chatId} {
-      allow read, write: if request.auth != null;
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create, update: if isSignedIn() && isValidChat(incoming());
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Admin Role Records (Internal RBAC)
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
   }
 }

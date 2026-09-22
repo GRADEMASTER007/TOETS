@@ -1204,7 +1204,7 @@ export const INITIAL_MESSAGE_THREADS: MessageThread[] = [
         id: 'm1',
         sender: 'buyer',
         senderName: 'Kagiso Mokoena',
-        text: 'Hi, I saw your listing on AfriTrade. Do you service the Fourways area for residential installations?',
+        text: 'Hi, I saw your listing on Market Place Hub. Do you service the Fourways area for residential installations?',
         timestamp: 'Today at 08:30',
       },
       {

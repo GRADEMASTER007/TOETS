@@ -36,8 +36,14 @@ import {
   FavoritesView 
 } from './components/FavoritesView';
 import { 
-  LegalModal 
-} from './components/LegalModal';
+  Footer 
+} from './components/Footer';
+import { 
+  LegalViewerModal 
+} from './components/LegalViewerModal';
+import { 
+  LEGAL_PAGES_DATA 
+} from './data/legalPagesData';
 import { 
   CookieBanner 
 } from './components/CookieBanner';
@@ -47,6 +53,12 @@ import {
 import { 
   LiveVoiceModal 
 } from './components/LiveVoiceModal';
+import { 
+  UserSettingsModal 
+} from './components/UserSettingsModal';
+import { 
+  ReferralProgramModal 
+} from './components/ReferralProgramModal';
 import { 
   signInWithGoogle, 
   logOut, 
@@ -66,7 +78,7 @@ import {
   INITIAL_TRANSACTIONS as initialTransactions, 
   INITIAL_REVIEWS as initialReviews 
 } from './data/initialData';
-import { Category, Country, Listing, PillarType, Transaction, Review } from './types';
+import { Category, Country, Listing, PillarType, Transaction, Review, SavedSearchAlert } from './types';
 import { 
   Filter, 
   SlidersHorizontal, 
@@ -287,8 +299,126 @@ export function App() {
   const [liveVoiceModalOpen, setLiveVoiceModalOpen] = useState(false);
   const [postListingModalOpen, setPostListingModalOpen] = useState(false);
   const [deliverablesModalOpen, setDeliverablesModalOpen] = useState(false);
+  const [userSettingsModalOpen, setUserSettingsModalOpen] = useState(false);
+  const [referralModalOpen, setReferralModalOpen] = useState(false);
   const [legalModalOpen, setLegalModalOpen] = useState(false);
-  const [legalModalTab, setLegalModalTab] = useState<'privacy' | 'terms' | 'popia'>('privacy');
+  const [legalModalSlug, setLegalModalSlug] = useState<string>('/privacy-policy');
+
+  // Saved Searches & Listing Notification Alerts
+  const [savedSearches, setSavedSearches] = useState<SavedSearchAlert[]>(() => {
+    const saved = localStorage.getItem('mph_saved_searches');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {}
+    }
+    return [
+      {
+        id: 'alert-1',
+        name: '3-Bedroom Houses in Sandton',
+        query: 'Sandton 3 bedroom solar pool',
+        pillar: 'property',
+        countryId: 'za',
+        frequency: 'instant',
+        emailEnabled: true,
+        pushEnabled: true,
+        matchCount: 4,
+        createdAt: '2026-09-18',
+      },
+      {
+        id: 'alert-2',
+        name: 'Toyota Land Cruisers & Hilux',
+        query: 'Toyota Hilux 4x4',
+        pillar: 'marketplace',
+        countryId: 'za',
+        frequency: 'daily',
+        emailEnabled: true,
+        pushEnabled: false,
+        matchCount: 7,
+        createdAt: '2026-09-20',
+      },
+      {
+        id: 'alert-3',
+        name: 'Certified Solar Installers',
+        query: 'solar inverter backup',
+        pillar: 'services',
+        countryId: 'za',
+        frequency: 'instant',
+        emailEnabled: true,
+        pushEnabled: true,
+        matchCount: 12,
+        createdAt: '2026-09-21',
+      },
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('mph_saved_searches', JSON.stringify(savedSearches));
+  }, [savedSearches]);
+
+  const handleAddSavedSearch = (alertData: Omit<SavedSearchAlert, 'id' | 'createdAt' | 'matchCount'>) => {
+    const newAlert: SavedSearchAlert = {
+      ...alertData,
+      id: `alert-${Date.now()}`,
+      createdAt: new Date().toISOString().split('T')[0],
+      matchCount: Math.floor(Math.random() * 8) + 2,
+    };
+    setSavedSearches((prev) => [newAlert, ...prev]);
+  };
+
+  const handleDeleteSavedSearch = (id: string) => {
+    setSavedSearches((prev) => prev.filter((a) => a.id !== id));
+  };
+
+  const handleToggleSavedSearchEmail = (id: string, enabled: boolean) => {
+    setSavedSearches((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, emailEnabled: enabled } : a))
+    );
+  };
+
+  const handleToggleSavedSearchPush = (id: string, enabled: boolean) => {
+    setSavedSearches((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, pushEnabled: enabled } : a))
+    );
+  };
+
+  const handleExecuteSavedSearch = (query: string, pillar: PillarType | 'all') => {
+    setSearchQuery(query);
+    if (pillar !== 'all') {
+      setActivePillar(pillar);
+    }
+    setCurrentView('portal');
+    setAiFilteredIds(null);
+  };
+
+  // Direct URL slug detection & back/forward navigation support for legal compliance pages
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      if (path && path !== '/' && LEGAL_PAGES_DATA[path]) {
+        setLegalModalSlug(path);
+        setLegalModalOpen(true);
+      }
+
+      const handlePopState = () => {
+        const currentPath = window.location.pathname;
+        if (currentPath && currentPath !== '/' && LEGAL_PAGES_DATA[currentPath]) {
+          setLegalModalSlug(currentPath);
+          setLegalModalOpen(true);
+        } else if (currentPath === '/') {
+          setLegalModalOpen(false);
+        }
+      };
+
+      window.addEventListener('popstate', handlePopState);
+      return () => window.removeEventListener('popstate', handlePopState);
+    }
+  }, []);
+
+  const handleOpenLegalPage = (slug: string) => {
+    setLegalModalSlug(slug);
+    setLegalModalOpen(true);
+  };
 
   // Dark mode & language & RTL state
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -516,6 +646,8 @@ export function App() {
         onSignOut={handleSignOut}
         onOpenPostListing={() => setPostListingModalOpen(true)}
         onOpenDeliverables={() => setDeliverablesModalOpen(true)}
+        onOpenUserSettings={() => setUserSettingsModalOpen(true)}
+        onOpenReferralProgram={() => setReferralModalOpen(true)}
         currentView={currentView}
         onChangeView={setCurrentView}
         savedCount={savedIds.length}
@@ -770,121 +902,15 @@ export function App() {
         )}
       </main>
 
-      {/* 3. Footer with All African Union Countries & UAE Subdomain Map */}
-      <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 text-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 space-y-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-8 border-b border-slate-800">
-            <div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 font-black flex items-center justify-center text-base">
-                  MPH
-                </div>
-                <span className="font-black text-xl text-white">Market Place Hub</span>
-              </div>
-              <p className="text-slate-400 mt-1 max-w-md text-xs">
-                Pan-African Marketplace, Business Directory, Trades Directory, and Property Portal across 55 regional subdomains on marketplacehub.company.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
-              <button
-                onClick={() => setDeliverablesModalOpen(true)}
-                className="text-amber-400 hover:text-amber-300"
-              >
-                Tech Stack Architecture
-              </button>
-              <button
-                onClick={() => setCountryModalOpen(true)}
-                className="text-slate-300 hover:text-white"
-              >
-                Regional Subdomains
-              </button>
-              <button
-                onClick={() => setPostListingModalOpen(true)}
-                className="text-slate-300 hover:text-white"
-              >
-                Post Listing
-              </button>
-            </div>
-          </div>
-
-          {/* Regional Country Subdomain Directory Links */}
-          <div className="space-y-3">
-            <div className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-              Browse 54 African Countries & UAE Subdomains:
-            </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px]">
-              {countries.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => {
-                    setCurrentCountry(c);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className={`hover:text-amber-400 transition-colors flex items-center gap-1 ${
-                    c.id === currentCountry.id ? 'text-amber-400 font-bold underline' : 'text-slate-400'
-                  }`}
-                >
-                  <span>{c.flag}</span>
-                  <span>{c.name}</span>
-                  <span className="text-[10px] text-slate-600 font-mono">({c.subdomain}.marketplacehub.company)</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="pt-6 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4 text-[11px] text-slate-500">
-            <div>
-              © 2026 Market Place Hub (marketplacehub.company). All rights reserved. SADC, AfCFTA & Gulf Commerce Gateway.
-            </div>
-            <div className="flex flex-wrap items-center gap-3 text-slate-400">
-              <button
-                onClick={() => {
-                  setLegalModalTab('popia');
-                  setLegalModalOpen(true);
-                }}
-                className="hover:text-amber-400 transition-colors"
-              >
-                POPIA & UAE Data Law (Decree 45)
-              </button>
-              <span>•</span>
-              <button
-                onClick={() => {
-                  setLegalModalTab('privacy');
-                  setLegalModalOpen(true);
-                }}
-                className="hover:text-amber-400 transition-colors"
-              >
-                Privacy Notice
-              </button>
-              <span>•</span>
-              <button
-                onClick={() => {
-                  setLegalModalTab('terms');
-                  setLegalModalOpen(true);
-                }}
-                className="hover:text-amber-400 transition-colors"
-              >
-                Terms of Service
-              </button>
-              <span>•</span>
-              <button
-                onClick={() => setDeliverablesModalOpen(true)}
-                className="hover:text-amber-400 transition-colors text-amber-500 font-semibold"
-              >
-                Cloud Run Spec
-              </button>
-            </div>
-            <div className="flex items-center gap-4 text-slate-500">
-              <span>PayFast EFT</span>
-              <span>•</span>
-              <span>Yoco Cards</span>
-              <span>•</span>
-              <span>PayPal Global</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+      {/* 3. Comprehensive Compliance & Regional Subdomains Footer */}
+      <Footer
+        countries={countries}
+        currentCountry={currentCountry}
+        onSelectCountry={(c) => setCurrentCountry(c)}
+        onOpenLegalPage={handleOpenLegalPage}
+        onOpenPostListing={() => setPostListingModalOpen(true)}
+        onOpenDeliverables={() => setDeliverablesModalOpen(true)}
+      />
 
       {/* 4. Global Modals */}
       {/* Country Selector Modal */}
@@ -985,18 +1011,47 @@ export function App() {
         onClose={() => setDeliverablesModalOpen(false)}
       />
 
-      {/* POPIA, UAE Data Protection & Legal Terms Modal */}
-      <LegalModal
+      {/* Comprehensive 48-Page Legal & Compliance Library Viewer */}
+      <LegalViewerModal
         isOpen={legalModalOpen}
         onClose={() => setLegalModalOpen(false)}
-        initialTab={legalModalTab}
+        currentSlug={legalModalSlug}
+        onSelectSlug={(slug) => setLegalModalSlug(slug)}
+      />
+
+      {/* User Settings & Listing Match Notification Alerts */}
+      <UserSettingsModal
+        isOpen={userSettingsModalOpen}
+        onClose={() => setUserSettingsModalOpen(false)}
+        currentUser={currentUser}
+        currentCountry={currentCountry}
+        countries={countries}
+        savedSearches={savedSearches}
+        onAddSavedSearch={handleAddSavedSearch}
+        onDeleteSavedSearch={handleDeleteSavedSearch}
+        onToggleSavedSearchEmail={handleToggleSavedSearchEmail}
+        onToggleSavedSearchPush={handleToggleSavedSearchPush}
+        onExecuteSearchAlert={handleExecuteSavedSearch}
+      />
+
+      {/* Vendor Referral Growth & Boost Credit Modal */}
+      <ReferralProgramModal
+        isOpen={referralModalOpen}
+        onClose={() => setReferralModalOpen(false)}
+        currentCountry={currentCountry}
+        currentUser={currentUser}
+        onOpenBoostModal={() => {
+          setReferralModalOpen(false);
+          if (listings.length > 0) {
+            setSelectedBoostListing(listings[0]);
+          }
+        }}
       />
 
       {/* Regional Cookie Consent Banner */}
       <CookieBanner
         onOpenPrivacy={() => {
-          setLegalModalTab('privacy');
-          setLegalModalOpen(true);
+          handleOpenLegalPage('/cookie-policy');
         }}
       />
     </div>

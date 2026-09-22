@@ -56,6 +56,15 @@ export const PostListingWizard: React.FC<PostListingWizardProps> = ({
   const [parkingSpaces, setParkingSpaces] = useState<number>(2);
   const [propertyType, setPropertyType] = useState<'House' | 'Apartment' | 'Commercial' | 'Plot'>('House');
   const [listingType, setListingType] = useState<'sale' | 'rent'>('sale');
+  const [petFriendly, setPetFriendly] = useState(true);
+  const [furnished, setFurnished] = useState(false);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([
+    'Solar Backup / Inverter',
+    'Swimming Pool',
+    '24/7 Security'
+  ]);
+  const [virtualTourUrl, setVirtualTourUrl] = useState('');
+  const [floorPlanUrl, setFloorPlanUrl] = useState('');
 
   const [condition, setCondition] = useState<'Brand New' | 'Like New' | 'Used - Good' | 'Refurbished'>('Brand New');
   const [negotiable, setNegotiable] = useState(true);
@@ -144,8 +153,11 @@ export const PostListingWizard: React.FC<PostListingWizardProps> = ({
         bathrooms,
         erfSizeM2: erfSize,
         parkingSpaces,
-        petFriendly: true,
-        furnished: false,
+        petFriendly,
+        furnished,
+        amenities: selectedAmenities,
+        virtualTourUrl: virtualTourUrl.trim() || undefined,
+        floorPlanUrl: floorPlanUrl.trim() || undefined,
         propertyType,
         listingType,
       };
@@ -306,46 +318,158 @@ export const PostListingWizard: React.FC<PostListingWizardProps> = ({
 
               {/* Property Fields */}
               {pillar === 'property' && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div>
-                    <label className="font-bold text-slate-700 block mb-1">Listing Type</label>
-                    <select
-                      value={listingType}
-                      onChange={(e) => setListingType(e.target.value as any)}
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl"
-                    >
-                      <option value="sale">For Sale</option>
-                      <option value="rent">To Rent</option>
-                    </select>
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Listing Type</label>
+                      <select
+                        value={listingType}
+                        onChange={(e) => setListingType(e.target.value as any)}
+                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl"
+                      >
+                        <option value="sale">For Sale</option>
+                        <option value="rent">To Rent</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Bedrooms</label>
+                      <input
+                        type="number"
+                        value={bedrooms}
+                        onChange={(e) => setBedrooms(Number(e.target.value))}
+                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Bathrooms</label>
+                      <input
+                        type="number"
+                        value={bathrooms}
+                        onChange={(e) => setBathrooms(Number(e.target.value))}
+                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Erf Size (m²)</label>
+                      <input
+                        type="number"
+                        value={erfSize}
+                        onChange={(e) => setErfSize(Number(e.target.value))}
+                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Parking Bays</label>
+                      <input
+                        type="number"
+                        value={parkingSpaces}
+                        onChange={(e) => setParkingSpaces(Number(e.target.value))}
+                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Property Type</label>
+                      <select
+                        value={propertyType}
+                        onChange={(e) => setPropertyType(e.target.value as any)}
+                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl"
+                      >
+                        <option value="House">House</option>
+                        <option value="Apartment">Apartment</option>
+                        <option value="Townhouse">Townhouse</option>
+                        <option value="Commercial">Commercial</option>
+                        <option value="Plot">Vacant Land / Plot</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2 pt-6">
+                      <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={petFriendly}
+                          onChange={(e) => setPetFriendly(e.target.checked)}
+                          className="rounded text-amber-600 focus:ring-amber-500"
+                        />
+                        <span>Pet Friendly</span>
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-2 pt-6">
+                      <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={furnished}
+                          onChange={(e) => setFurnished(e.target.checked)}
+                          className="rounded text-amber-600 focus:ring-amber-500"
+                        />
+                        <span>Furnished</span>
+                      </label>
+                    </div>
                   </div>
-                  <div>
-                    <label className="font-bold text-slate-700 block mb-1">Bedrooms</label>
-                    <input
-                      type="number"
-                      value={bedrooms}
-                      onChange={(e) => setBedrooms(Number(e.target.value))}
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl"
-                    />
+
+                  {/* Additional Property Links & Amenities */}
+                  <div className="space-y-3 pt-3 border-t border-slate-200 text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="font-bold text-slate-700 block mb-1">Virtual Tour / Video Link (YouTube / Matterport)</label>
+                        <input
+                          type="url"
+                          value={virtualTourUrl}
+                          onChange={(e) => setVirtualTourUrl(e.target.value)}
+                          placeholder="https://my.matterport.com/show/?m=..."
+                          className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl"
+                        />
+                      </div>
+                      <div>
+                        <label className="font-bold text-slate-700 block mb-1">Floor Plan URL / Diagram</label>
+                        <input
+                          type="url"
+                          value={floorPlanUrl}
+                          onChange={(e) => setFloorPlanUrl(e.target.value)}
+                          placeholder="https://images.unsplash.com/photo-..."
+                          className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1.5">Amenities Checklist</label>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          'Solar Backup / Inverter',
+                          'Swimming Pool',
+                          '24/7 Security',
+                          'Borehole / Water Backup',
+                          'Air Conditioning',
+                          'Fiber Internet',
+                          'Balcony / Patio',
+                          'Staff Quarters',
+                        ].map((amenity) => {
+                          const isChecked = selectedAmenities.includes(amenity);
+                          return (
+                            <button
+                              type="button"
+                              key={amenity}
+                              onClick={() => {
+                                if (isChecked) {
+                                  setSelectedAmenities(selectedAmenities.filter((a) => a !== amenity));
+                                } else {
+                                  setSelectedAmenities([...selectedAmenities, amenity]);
+                                }
+                              }}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                                isChecked
+                                  ? 'bg-amber-100 border-amber-400 text-amber-900 shadow-xs'
+                                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                              }`}
+                            >
+                              {isChecked ? '✓ ' : '+ '}
+                              {amenity}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="font-bold text-slate-700 block mb-1">Bathrooms</label>
-                    <input
-                      type="number"
-                      value={bathrooms}
-                      onChange={(e) => setBathrooms(Number(e.target.value))}
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold text-slate-700 block mb-1">Erf Size (m²)</label>
-                    <input
-                      type="number"
-                      value={erfSize}
-                      onChange={(e) => setErfSize(Number(e.target.value))}
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl"
-                    />
-                  </div>
-                </div>
+                </>
               )}
 
               {/* Service Fields */}

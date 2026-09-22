@@ -1,0 +1,143 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile document storing public identity and authentication metadata",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "format": "email", "maxLength": 120 },
+        "photoURL": { "type": "string", "maxLength": 1000 },
+        "lastLogin": { "type": "string" }
+      },
+      "required": ["uid"]
+    },
+    "Favorite": {
+      "title": "Favorite",
+      "description": "User saved listing reference",
+      "type": "object",
+      "properties": {
+        "listingId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["listingId"]
+    },
+    "Listing": {
+      "title": "Listing",
+      "description": "Public listing across Marketplace, Business Directory, Service Directory, or Property Portal",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 5000 },
+        "pillar": { "type": "string", "enum": ["marketplace", "business", "service", "property"] },
+        "countryCode": { "type": "string", "maxLength": 4 },
+        "city": { "type": "string", "maxLength": 100 },
+        "price": { "type": "number" },
+        "currencyCode": { "type": "string", "maxLength": 6 },
+        "vendorId": { "type": "string", "maxLength": 128 },
+        "vendorName": { "type": "string", "maxLength": 120 },
+        "categoryName": { "type": "string", "maxLength": 100 },
+        "subcategory": { "type": "string", "maxLength": 100 },
+        "featuredTier": { "type": "string", "enum": ["none", "free", "basic", "month", "three_months"] },
+        "images": { "type": "array" },
+        "verified": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "title", "pillar", "countryCode", "vendorId"]
+    },
+    "Lead": {
+      "title": "Lead",
+      "description": "Customer inquiry or trade lead sent to a vendor",
+      "type": "object",
+      "properties": {
+        "listingId": { "type": "string", "maxLength": 128 },
+        "vendorId": { "type": "string", "maxLength": 128 },
+        "senderName": { "type": "string", "maxLength": 100 },
+        "senderPhone": { "type": "string", "maxLength": 40 },
+        "senderEmail": { "type": "string", "format": "email", "maxLength": 120 },
+        "message": { "type": "string", "maxLength": 2000 },
+        "status": { "type": "string", "enum": ["pending", "contacted", "closed"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["listingId", "senderName", "message"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Customer review and rating on a vendor or listing",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "listingId": { "type": "string", "maxLength": 128 },
+        "authorName": { "type": "string", "maxLength": 100 },
+        "authorId": { "type": "string", "maxLength": 128 },
+        "rating": { "type": "number" },
+        "comment": { "type": "string", "maxLength": 1000 },
+        "verifiedPurchase": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "listingId", "authorName", "rating", "comment"]
+    },
+    "KYCSubmission": {
+      "title": "KYCSubmission",
+      "description": "Vendor business registration and KYC compliance verification documents",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "businessName": { "type": "string", "maxLength": 150 },
+        "registrationNumber": { "type": "string", "maxLength": 100 },
+        "documentType": { "type": "string", "maxLength": 50 },
+        "documentName": { "type": "string", "maxLength": 200 },
+        "countryCode": { "type": "string", "maxLength": 4 },
+        "status": { "type": "string", "enum": ["pending", "verified", "rejected"] },
+        "submittedAt": { "type": "string" }
+      },
+      "required": ["userId", "businessName", "registrationNumber"]
+    },
+    "ChatSession": {
+      "title": "ChatSession",
+      "description": "Saved AI assistant conversation thread history",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "maxLength": 50 },
+        "model": { "type": "string", "maxLength": 50 },
+        "messages": { "type": "array" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "role", "model"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile document storing public identity and settings"
+    },
+    "/users/{userId}/favorites/{favId}": {
+      "schema": "Favorite",
+      "description": "Subcollection of saved favorites for a specific user"
+    },
+    "/listings/{listingId}": {
+      "schema": "Listing",
+      "description": "Public listings across the 4 marketplace pillars and 55 country subdomains"
+    },
+    "/leads/{leadId}": {
+      "schema": "Lead",
+      "description": "Customer inquiry records submitted to vendors"
+    },
+    "/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "User reviews and star ratings for listings and vendors"
+    },
+    "/kyc/{kycId}": {
+      "schema": "KYCSubmission",
+      "description": "Vendor KYC and legal compliance verification records"
+    },
+    "/chats/{chatId}": {
+      "schema": "ChatSession",
+      "description": "AI conversation thread logs and role history per user"
+    }
+  }
+}

@@ -81,9 +81,11 @@ export interface Listing {
     parkingSpaces?: number;
     petFriendly?: boolean;
     furnished?: boolean;
+    amenities?: string[];
     propertyType: 'House' | 'Apartment' | 'Townhouse' | 'Commercial' | 'Plot' | 'Farm' | 'Development';
     listingType: 'sale' | 'rent';
     virtualTourUrl?: string;
+    floorPlanUrl?: string;
   };
   marketplaceDetails?: {
     condition: 'Brand New' | 'Like New' | 'Used - Good' | 'Refurbished';
@@ -192,3 +194,42 @@ export interface AISearchState {
     groundingSources?: { title: string; url: string }[];
   } | null;
 }
+
+export interface SavedSearchAlert {
+  id: string;
+  userId?: string;
+  name: string;
+  query: string;
+  pillar: PillarType | 'all';
+  category?: string;
+  city?: string;
+  countryId: string;
+  maxPrice?: number;
+  frequency: 'instant' | 'daily' | 'weekly';
+  emailEnabled: boolean;
+  pushEnabled: boolean;
+  matchCount: number;
+  createdAt: string;
+  lastNotifiedAt?: string;
+}
+
+export interface NotificationPreferences {
+  emailNotifications: boolean;
+  pushNotifications: boolean;
+  smsNotifications: boolean;
+  instantLeadAlerts: boolean;
+  dailyDigest: boolean;
+  priceDropAlerts: boolean;
+  weeklyMarketReports: boolean;
+  securityAlerts: boolean;
+}
+
+export interface ReferralProfile {
+  code: string;
+  referralLink: string;
+  totalReferred: number;
+  activeVendors: number;
+  earnedBoostCredits: number; // e.g. R 450 ZAR
+  currency: string;
+}
+

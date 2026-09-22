@@ -25,7 +25,8 @@ import {
   Flame,
   LogIn,
   LogOut,
-  UserCheck
+  UserCheck,
+  Gift
 } from 'lucide-react';
 import { Country, PillarType } from '../types';
 
@@ -42,6 +43,8 @@ interface HeaderProps {
   onSignOut?: () => void;
   onOpenPostListing: () => void;
   onOpenDeliverables: () => void;
+  onOpenUserSettings?: () => void;
+  onOpenReferralProgram?: () => void;
   currentView: 'portal' | 'vendor' | 'admin' | 'favorites';
   onChangeView: (view: 'portal' | 'vendor' | 'admin' | 'favorites') => void;
   savedCount: number;
@@ -64,6 +67,8 @@ export const Header: React.FC<HeaderProps> = ({
   onSignOut,
   onOpenPostListing,
   onOpenDeliverables,
+  onOpenUserSettings,
+  onOpenReferralProgram,
   currentView,
   onChangeView,
   savedCount,
@@ -423,7 +428,44 @@ export const Header: React.FC<HeaderProps> = ({
                   <span>Cloud Firestore Sync Active</span>
                 </div>
 
-                <div className="pt-1">
+                <div className="pt-1 space-y-1 border-t border-slate-100">
+                  {onOpenUserSettings && (
+                    <button
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        onOpenUserSettings();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
+                    >
+                      <Bell className="w-4 h-4 text-amber-600" />
+                      <span>Saved Searches &amp; Alerts</span>
+                    </button>
+                  )}
+                  {onOpenReferralProgram && (
+                    <button
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        onOpenReferralProgram();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
+                    >
+                      <Gift className="w-4 h-4 text-amber-600" />
+                      <span>Invite Vendors (Earn Boosts)</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      onChangeView('favorites');
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
+                  >
+                    <Heart className="w-4 h-4 text-rose-500" />
+                    <span>My Saved Listings ({savedCount})</span>
+                  </button>
+                </div>
+
+                <div className="pt-1 border-t border-slate-100">
                   <button
                     onClick={() => {
                       setUserMenuOpen(false);

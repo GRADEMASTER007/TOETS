@@ -347,7 +347,31 @@ export const ListingDetailModal: React.FC<ListingDetailModalProps> = ({
                         <span>Virtual Walkthrough</span>
                       </a>
                     )}
+                    {listing.propertyDetails.floorPlanUrl && (
+                      <a
+                        href={listing.propertyDetails.floorPlanUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200 text-amber-800 font-semibold flex items-center gap-1 hover:bg-amber-100"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        <span>Floor Plan</span>
+                      </a>
+                    )}
                   </div>
+                  {listing.propertyDetails.amenities && listing.propertyDetails.amenities.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-slate-200">
+                      <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Amenities Checklist:</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {listing.propertyDetails.amenities.map((amenity, aIdx) => (
+                          <span key={aIdx} className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-medium flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            <span>{amenity}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
