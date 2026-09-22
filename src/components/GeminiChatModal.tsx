@@ -18,7 +18,9 @@ import {
   Truck, 
   ShieldCheck, 
   SlidersHorizontal,
-  Flame
+  Flame,
+  Globe,
+  Check
 } from 'lucide-react';
 import { Country } from '../types';
 import { auth, saveChatSessionToFirestore } from '../lib/firebase';

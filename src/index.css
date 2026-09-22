@@ -7,70 +7,33 @@
     --font-mono: 'JetBrains Mono', monospace;
   }
 
-  html {
-    scroll-behavior: smooth;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  body {
-    @apply antialiased text-slate-900 bg-slate-50;
-    font-family: var(--font-body);
-  }
-
-  h1, h2, h3, h4, .font-display {
-    font-family: var(--font-display);
-    @apply tracking-tight;
-  }
-
-  /* Tabular Numerals for prices and metrics */
-  .tabular-nums {
-    font-variant-numeric: tabular-nums;
-    font-family: var(--font-mono);
-  }
+  html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+  body { @apply antialiased text-slate-900 bg-slate-50; font-family: var(--font-body); }
+  h1, h2, h3, h4, .font-display { font-family: var(--font-display); @apply tracking-tight; }
+  .tabular-nums { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+  ::selection { background: #f59e0b; color: #0f172a; }
 }
 
 @layer components {
-  .btn-primary {
-    @apply px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl transition-all shadow-xs active:scale-95 flex items-center justify-center gap-2;
-  }
-  
-  .btn-secondary {
-    @apply px-4 py-2 bg-white border border-slate-200 text-slate-800 font-bold rounded-xl hover:bg-slate-50 transition-all shadow-xs active:scale-95 flex items-center justify-center gap-2;
-  }
-
-  .card-elevation {
-    @apply bg-white border border-slate-200 shadow-xs hover:shadow-lg transition-all duration-300 rounded-2xl overflow-hidden;
-  }
-
-  .glass-effect {
-    @apply bg-white/80 backdrop-blur-md border border-white/20;
-  }
-
-  .metadata-text {
-    @apply text-xs text-slate-500 font-medium;
-  }
+  .btn-primary { @apply flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2 font-bold text-slate-950 shadow-sm transition-all hover:bg-amber-400 active:scale-95; }
+  .btn-secondary { @apply flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 font-bold text-slate-800 shadow-sm transition-all hover:bg-slate-50 active:scale-95; }
+  .card-elevation { @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl; }
+  .glass-effect { @apply border border-white/20 bg-white/80 backdrop-blur-md; }
+  .metadata-text { @apply text-xs font-medium text-slate-500; }
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+.hero-shell { min-height: 610px; }
+.hero-grid { background-image: linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px); background-size: 42px 42px; mask-image: linear-gradient(to bottom, black, transparent 82%); }
+.hero-visual-rail { position: relative; min-height: 390px; padding: 16px 0 0 16px; }
+.hero-photo-card { position: relative; min-height: 330px; overflow: hidden; border: 1px solid rgba(255,255,255,.26); border-radius: 30px; background-position: center; background-size: cover; box-shadow: 0 28px 70px rgba(0,0,0,.35); transform: rotate(2.5deg); }
+.hero-stat-card { position: relative; z-index: 2; width: calc(100% - 8px); border: 1px solid rgba(226,232,240,.9); border-radius: 18px; background: rgba(255,255,255,.96); padding: 12px 14px; box-shadow: 0 18px 45px rgba(15,23,42,.18); }
 
-::-webkit-scrollbar-track {
-  @apply bg-slate-100;
-}
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { @apply bg-slate-100; }
+::-webkit-scrollbar-thumb { @apply rounded-full bg-slate-300 transition-colors hover:bg-slate-400; }
+.scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
 
-::-webkit-scrollbar-thumb {
-  @apply bg-slate-300 rounded-full hover:bg-slate-400 transition-colors;
-}
-
-.scrollbar-none {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
-}
-
+@media (max-width: 768px) { .hero-shell { min-height: 610px; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }

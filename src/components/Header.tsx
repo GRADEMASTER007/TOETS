@@ -222,7 +222,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="font-extrabold text-lg tracking-tight font-display">M</span>
             </div>
             <span className="font-bold text-2xl tracking-tighter text-slate-900 group-hover:text-amber-600 transition-colors font-display">
-              Market Place Hub
+              Marketplace Hub
             </span>
           </button>
         </div>

@@ -17,6 +17,7 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
+import { Listing, Order } from '../types';
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
@@ -103,10 +104,10 @@ export const signInWithGoogle = async () => {
 };
 
 // Data Helpers
-export const fetchFirestoreListings = async () => {
+export const fetchFirestoreListings = async (): Promise<Listing[]> => {
   const q = query(collection(db, 'listings'), where('status', '==', 'active'));
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() })) as unknown as Listing[];
 };
 
 export const saveListingToFirestore = async (listing: any) => {
@@ -134,9 +135,9 @@ export const toggleFavoriteInFirestore = async (uid: string, listingId: string, 
   }
 };
 
-export const fetchOrders = async () => {
+export const fetchOrders = async (): Promise<Order[]> => {
   const snap = await getDocs(collection(db, 'orders'));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() })) as unknown as Order[];
 };
 
 export const submitLeadToFirestore = async (leadData: any) => {

@@ -68,7 +68,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   ads,
   onUpdateAdCampaign,
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'sales' | 'countries' | 'categories' | 'pricing' | 'moderation' | 'users' | 'seo' | 'ledger' | 'ads'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'sales' | 'countries' | 'categories' | 'pricing' | 'moderation' | 'users' | 'seo' | 'ledger' | 'ads' | 'intelligence'>('overview');
 
   // Simulated vendor management state
   const [vendorsList, setVendorsList] = useState([
@@ -155,7 +155,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <div className="p-6 bg-slate-900 text-white rounded-3xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-slate-800">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-black">Market Place Hub Master CMS</h1>
+            <h1 className="text-xl font-black">Marketplace Hub Master CMS</h1>
             <div className="text-[10px] font-black uppercase tracking-widest text-amber-500 border-l-2 border-amber-600 pl-2">
               Super Admin Mode
             </div>

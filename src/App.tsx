@@ -118,7 +118,8 @@ import {
   ShieldCheck,
   LayoutGrid,
   LayoutDashboard,
-  Sun
+  Sun,
+  Megaphone
 } from 'lucide-react';
 
 // Intelligent Subdomain & GEO Country Resolution
